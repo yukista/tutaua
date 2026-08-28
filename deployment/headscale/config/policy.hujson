@@ -1,0 +1,22 @@
+{
+  // Boxes can reach the management server, but not other customer boxes.
+  // Only devices explicitly tagged as support stations can reach a box.
+  "tagOwners": {
+    "tag:box": ["tutaua@"],
+    "tag:manager": ["tutaua@"],
+    "tag:support": ["tutaua@"]
+  },
+
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:box"],
+      "dst": ["tag:manager:*"],
+    },
+    {
+      "action": "accept",
+      "src": ["tag:support"],
+      "dst": ["tag:box:*"],
+    },
+  ],
+}

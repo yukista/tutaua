@@ -1,0 +1,16 @@
+tutaua-demo.duckdns.org {
+	log {
+		output discard
+	}
+
+	reverse_proxy 127.0.0.1:8097
+}
+
+tutaua-app.duckdns.org {
+	encode zstd gzip
+	log {
+		output discard
+	}
+
+	reverse_proxy 127.0.0.1:8088
+}

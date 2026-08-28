@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-21T14:15:00Z",
+  "releases": [
+    {
+      "app": "com.yukista.tutaua.box",
+      "channel": "stable",
+      "versionCode": 3,
+      "versionName": "0.2.1",
+      "url": "/artifacts/tutaua-box-0.2.1.apk",
+      "sha256": "e3c50c35068ac721bfa84990a49748b34eb12796a29beafbff9b2703c3c0b64c"
+    },
+    {
+      "app": "com.yukista.tutaua",
+      "channel": "stable",
+      "versionCode": 43,
+      "versionName": "1.0.12",
+      "url": "/artifacts/tutaua-1.0.12.apk",
+      "sha256": "6ac7bda556aba68bd349cfa2f9a3dc6b3bd081f5c44d61e1fdb2142be3387396"
+    },
+    {
+      "app": "tv.tutaua.app",
+      "channel": "stable",
+      "versionCode": 4,
+      "versionName": "1.0.3",
+      "url": "/artifacts/tutaua-tv-1.0.3.apk",
+      "sha256": "4bac19cf97b95910efc272801ab0843d219cdfcac9383fd820b064fad8f6329f"
+    }
+  ]
+}

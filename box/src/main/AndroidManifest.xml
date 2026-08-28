@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="android.software.leanback" android:required="true" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <permission
+        android:name="com.yukista.tutaua.permission.READ_CONFIG"
+        android:protectionLevel="signature" />
+    <queries>
+        <package android:name="com.yukista.tutaua" />
+        <package android:name="tv.tutaua.app" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:banner="@drawable/banner"
+        android:icon="@drawable/icon"
+        android:label="Tutaua Box"
+        android:theme="@style/BoxTheme">
+        <provider
+            android:name=".ConfigProvider"
+            android:authorities="com.yukista.tutaua.box.config"
+            android:exported="true"
+            android:readPermission="com.yukista.tutaua.permission.READ_CONFIG" />
+        <receiver
+            android:name=".ProvisioningReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.yukista.tutaua.box.action.PROVISION" />
+            </intent-filter>
+        </receiver>
+        <activity
+            android:name=".AdminActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustNothing" />
+        <activity
+            android:name=".HomeActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

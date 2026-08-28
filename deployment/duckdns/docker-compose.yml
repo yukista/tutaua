@@ -1,0 +1,22 @@
+services:
+  duckdns:
+    image: curlimages/curl:8.10.1
+    container_name: tutaua-duckdns
+    restart: unless-stopped
+    env_file:
+      - duckdns.env
+    environment:
+      DUCKDNS_DOMAINS: tutaua-app,tutaua-demo
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          result="$$(curl --fail --silent --show-error --max-time 20 "https://www.duckdns.org/update?domains=$${DUCKDNS_DOMAINS}&token=$${DUCKDNS_TOKEN}&ip=")"
+          if [ "$${result}" = "OK" ]; then
+            echo "$$(date -u +%FT%TZ) DuckDNS records updated"
+          else
+            echo "$$(date -u +%FT%TZ) DuckDNS update failed" >&2
+          fi
+          sleep 300
+        done

@@ -1,0 +1,14 @@
+services:
+  tutaua-backend:
+    build: .
+    container_name: tutaua-backend
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data:/data:ro
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp

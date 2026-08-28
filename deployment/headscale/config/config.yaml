@@ -1,0 +1,80 @@
+---
+# Public control-plane URL. TLS is terminated by the existing Caddy service.
+server_url: https://tutaua-control.duckdns.org
+listen_addr: 0.0.0.0:8080
+metrics_listen_addr: ""
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+trusted_proxies:
+  - 172.16.0.0/12
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+derp:
+  server:
+    enabled: false
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 3h
+
+disable_check_updates: true
+
+node:
+  expiry: 0
+  ephemeral:
+    inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  debug: false
+  gorm:
+    prepare_stmt: true
+    parameterized_queries: true
+    skip_err_record_not_found: true
+    slow_threshold: 1000
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+    wal_autocheckpoint: 1000
+
+log:
+  level: info
+  format: json
+
+policy:
+  mode: file
+  path: /etc/headscale/policy.hujson
+
+# Do not replace the DNS configured by the network where a box is installed.
+dns:
+  magic_dns: false
+  base_domain: tail.tutaua.invalid
+  override_local_dns: false
+  nameservers:
+    global: []
+    split: {}
+  search_domains: []
+  extra_records: []
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+tls_cert_path: ""
+tls_key_path: ""
+
+# Never send client logs to Tailscale Inc.
+logtail:
+  enabled: false
+
+taildrop:
+  enabled: false
+
+auto_update:
+  enabled: false
