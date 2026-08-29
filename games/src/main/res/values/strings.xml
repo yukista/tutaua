@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Tutaua Retro</string>
+    <string name="title">Games</string>
+    <string name="subtitle">8 and 16-bit consoles</string>
+    <string name="rescan">RESCAN USB</string>
+    <string name="grant_access">ALLOW ACCESS</string>
+    <string name="permission_explanation">Tutaua needs access to storage to detect ROMs on connected USB drives.</string>
+    <string name="empty_library">No compatible ROMs were found.\nCopy them into the selected folder.</string>
+    <string name="loading">Loading library…</string>
+    <string name="game_error">The game could not be opened</string>
+    <string name="tx5_controls">OK: A  ·  MENU: B  ·  NETFLIX: SELECT  ·  YOUTUBE: START  ·  BACK: EXIT</string>
+</resources>

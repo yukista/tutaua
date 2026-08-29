@@ -25,19 +25,33 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
             String updates = decode(intent, "updates_b64");
             String channel = decode(intent, "channel_b64");
             String timeoutValue = decode(intent, "screen_timeout_b64");
+            String libraryKeyValue = decode(intent, "library_keycode_b64");
+            String liveTvKeyValue = decode(intent, "live_tv_keycode_b64");
+            String gamesKeyValue = decode(intent, "games_keycode_b64");
+            String gamesEnabledValue = decode(intent, "games_enabled_b64");
+            int libraryKeyCode = libraryKeyValue.isEmpty() ? BoxConfig.DEFAULT_LIBRARY_KEYCODE : Integer.parseInt(libraryKeyValue);
+            int liveTvKeyCode = liveTvKeyValue.isEmpty() ? BoxConfig.DEFAULT_LIVE_TV_KEYCODE : Integer.parseInt(liveTvKeyValue);
+            int gamesKeyCode = gamesKeyValue.isEmpty() ? BoxConfig.DEFAULT_GAMES_KEYCODE : Integer.parseInt(gamesKeyValue);
+            boolean gamesEnabled = gamesEnabledValue.isEmpty() || Boolean.parseBoolean(gamesEnabledValue);
             int timeoutMinutes = timeoutValue.isEmpty() ? 10 : Integer.parseInt(timeoutValue);
-            if (!validUrl(jellyfin, false) || !validUrl(tvApi, false)
-                    || !validUrl(tvStream, true) || !validUrl(updates, true)
-                    || !channel.matches("[A-Za-z0-9._-]{1,32}")
-                    || timeoutMinutes < 1 || timeoutMinutes > 120)
+            if (!BoxConfig.validUrl(jellyfin, false) || !BoxConfig.validUrl(tvApi, false)
+                    || !BoxConfig.validUrl(tvStream, true) || !BoxConfig.validUrl(updates, true)
+                    || !BoxConfig.validChannel(channel)
+                    || !BoxConfig.validKeyCode(libraryKeyCode) || !BoxConfig.validKeyCode(liveTvKeyCode) || !BoxConfig.validKeyCode(gamesKeyCode)
+                    || hasDuplicateNonZero(libraryKeyCode, liveTvKeyCode, gamesKeyCode)
+                    || !BoxConfig.validTimeoutMinutes(timeoutMinutes))
                 throw new IllegalArgumentException("invalid_configuration");
             SharedPreferences.Editor editor = BoxConfig.preferences(context).edit()
-                    .putString(BoxConfig.JELLYFIN_URL, trim(jellyfin))
-                    .putString(BoxConfig.TV_API_URL, trim(tvApi))
+                    .putString(BoxConfig.JELLYFIN_URL, BoxConfig.trimUrl(jellyfin))
+                    .putString(BoxConfig.TV_API_URL, BoxConfig.trimUrl(tvApi))
                     .putString(BoxConfig.TV_STREAM_URL, tvStream.trim())
                     .putString(BoxConfig.UPDATE_MANIFEST_URL, updates.trim())
                     .putString(BoxConfig.UPDATE_CHANNEL, channel)
-                    .putString(BoxConfig.SCREEN_TIMEOUT_MINUTES, String.valueOf(timeoutMinutes));
+                    .putString(BoxConfig.SCREEN_TIMEOUT_MINUTES, String.valueOf(timeoutMinutes))
+                    .putString(BoxConfig.LIBRARY_KEYCODE, String.valueOf(libraryKeyCode))
+                    .putString(BoxConfig.LIVE_TV_KEYCODE, String.valueOf(liveTvKeyCode))
+                    .putString(BoxConfig.GAMES_KEYCODE, String.valueOf(gamesKeyCode));
+            editor.putBoolean(BoxConfig.GAMES_ENABLED, gamesEnabled);
             if (!editor.commit()) throw new IllegalStateException("write_failed");
             if (!DeviceSettings.applyScreenTimeoutMinutes(timeoutMinutes))
                 throw new IllegalStateException("screen_timeout_failed");
@@ -53,11 +67,8 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
         return value == null || "-".equals(value) ? ""
                 : new String(Base64.decode(value, Base64.NO_WRAP), StandardCharsets.UTF_8);
     }
-    private static boolean validUrl(String value, boolean emptyAllowed) {
-        value = value.trim(); if (value.isEmpty()) return emptyAllowed;
-        android.net.Uri uri = android.net.Uri.parse(value);
-        return uri.getHost() != null && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()));
-    }
-    private static String trim(String value) { return value.trim().replaceAll("/+$", ""); }
     private static String safe(String value) { return value != null && value.matches("[A-Za-z0-9-]{8,64}") ? value : "unknown"; }
+    private static boolean hasDuplicateNonZero(int first, int second, int third) {
+        return first != 0 && (first == second || first == third) || second != 0 && second == third;
+    }
 }

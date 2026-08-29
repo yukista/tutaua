@@ -2,6 +2,7 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
         gradlePluginPortal()
     }
 }
@@ -11,8 +12,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
 rootProject.name = "Tutaua"
-include(":app", ":box")
+include(":app", ":box", ":games", ":manager")

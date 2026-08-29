@@ -6,16 +6,22 @@
     <permission
         android:name="com.yukista.tutaua.permission.READ_CONFIG"
         android:protectionLevel="signature" />
+    <permission
+        android:name="com.yukista.tutaua.permission.MANAGE_BOX"
+        android:protectionLevel="signature" />
     <queries>
         <package android:name="com.yukista.tutaua" />
         <package android:name="tv.tutaua.app" />
+        <package android:name="com.yukista.tutaua.games" />
     </queries>
 
     <application
         android:allowBackup="false"
         android:banner="@drawable/banner"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
         android:icon="@drawable/icon"
-        android:label="Tutaua Box"
+        android:label="@string/app_name"
         android:theme="@style/BoxTheme">
         <provider
             android:name=".ConfigProvider"
@@ -30,16 +36,32 @@
                 <action android:name="com.yukista.tutaua.box.action.PROVISION" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".RemoteConfigReceiver"
+            android:exported="true"
+            android:permission="com.yukista.tutaua.permission.MANAGE_BOX">
+            <intent-filter><action android:name="com.yukista.tutaua.box.action.APPLY_REMOTE_CONFIG" /></intent-filter>
+        </receiver>
+        <service
+            android:name=".RemoteKeyService"
+            android:exported="false"
+            android:label="@string/remote_service_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/remote_key_service" />
+        </service>
         <activity
             android:name=".AdminActivity"
             android:exported="false"
-            android:screenOrientation="landscape"
             android:windowSoftInputMode="stateAlwaysHidden|adjustNothing" />
         <activity
             android:name=".HomeActivity"
             android:exported="true"
-            android:launchMode="singleTask"
-            android:screenOrientation="landscape">
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

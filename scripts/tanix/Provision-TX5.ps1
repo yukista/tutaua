@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory = $true)][string]$TutauaApk,
     [Parameter(Mandatory = $true)][string]$BoxApk,
     [Parameter(Mandatory = $true)][string]$TvApk,
+    [Parameter(Mandatory = $true)][string]$GamesApk,
     [Parameter(Mandatory = $true)][uri]$JellyfinServer,
     [Parameter(Mandatory = $true)][uri]$TvApiUrl,
     [uri]$TvStreamUrl,
@@ -13,6 +14,10 @@ param(
     [string]$Adb = 'sdk\platform-tools\adb.exe',
     [string]$ReportDirectory = 'provisioning-reports',
     [ValidateRange(1, 120)][int]$ScreenOffTimeoutMinutes = 10,
+    [ValidateRange(0, 400)][int]$LibraryButtonKeyCode = 132,
+    [ValidateRange(0, 400)][int]$LiveTvButtonKeyCode = 134,
+    [ValidateRange(0, 400)][int]$GamesButtonKeyCode = 0,
+    [bool]$GamesEnabled = $true,
     [switch]$KeepLabAdb,
     [switch]$AllowCompatibleHardware
 )
@@ -22,6 +27,7 @@ $adbPath = (Resolve-Path -LiteralPath $Adb).Path
 $tutauaApkPath = (Resolve-Path -LiteralPath $TutauaApk).Path
 $boxApkPath = (Resolve-Path -LiteralPath $BoxApk).Path
 $tvApkPath = (Resolve-Path -LiteralPath $TvApk).Path
+$gamesApkPath = (Resolve-Path -LiteralPath $GamesApk).Path
 $deviceAddress = ($Target -split ':')[0]
 $stableTarget = "${deviceAddress}:5555"
 $screenOffTimeoutMs = $ScreenOffTimeoutMinutes * 60000
@@ -95,11 +101,13 @@ if (-not $PSCmdlet.ShouldProcess("$Target ($($identity.Serial))", 'Provisionar c
 foreach ($item in @(
     @{Name='Tutaua Box';Path=$boxApkPath},
     @{Name='Tutaua';Path=$tutauaApkPath},
-    @{Name='Tutaua TV';Path=$tvApkPath}
+    @{Name='Tutaua TV';Path=$tvApkPath},
+    @{Name='Tutaua Retro';Path=$gamesApkPath}
 )) {
     & $adbPath -s $Target install -r $item.Path | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "La instal·lació de $($item.Name) ha fallat." }
 }
+Invoke-Adb $Target @('shell','pm','grant','com.yukista.tutaua.games','android.permission.READ_EXTERNAL_STORAGE') | Out-Null
 $boxRequestId = [guid]::NewGuid().ToString('N')
 Invoke-Adb $Target @('logcat','-c') | Out-Null
 Invoke-Adb $Target @('shell','am','broadcast','-a','com.yukista.tutaua.box.action.PROVISION',
@@ -109,7 +117,11 @@ Invoke-Adb $Target @('shell','am','broadcast','-a','com.yukista.tutaua.box.actio
     '--es','tv_stream_b64',(ConvertTo-Base64 $(if($TvStreamUrl){$TvStreamUrl.AbsoluteUri}else{''})),
     '--es','updates_b64',(ConvertTo-Base64 $(if($UpdateManifestUrl){$UpdateManifestUrl.AbsoluteUri}else{''})),
     '--es','channel_b64',(ConvertTo-Base64 $UpdateChannel),
-    '--es','screen_timeout_b64',(ConvertTo-Base64 "$ScreenOffTimeoutMinutes")) | Out-Null
+    '--es','screen_timeout_b64',(ConvertTo-Base64 "$ScreenOffTimeoutMinutes"),
+    '--es','library_keycode_b64',(ConvertTo-Base64 "$LibraryButtonKeyCode"),
+    '--es','live_tv_keycode_b64',(ConvertTo-Base64 "$LiveTvButtonKeyCode"),
+    '--es','games_keycode_b64',(ConvertTo-Base64 "$GamesButtonKeyCode"),
+    '--es','games_enabled_b64',(ConvertTo-Base64 "$GamesEnabled")) | Out-Null
 Start-Sleep -Seconds 2
 $boxResult = (Invoke-Adb $Target @('logcat','-d','-s','TUTAUA_BOX_PROVISION:I','*:S')) -join "`n"
 if ($boxResult -notmatch "$boxRequestId SUCCESS") { throw 'Tutaua Box no ha acceptat la configuració.' }
@@ -164,7 +176,8 @@ $report = [ordered]@{Timestamp=(Get-Date).ToString('o');Success=$success;Identit
     ExactBuild=$buildMatches;Apks=@(
         @{Package='com.yukista.tutaua.box';Path=$boxApkPath;Sha256=(Get-FileHash -LiteralPath $boxApkPath -Algorithm SHA256).Hash},
         @{Package='com.yukista.tutaua';Path=$tutauaApkPath;Sha256=(Get-FileHash -LiteralPath $tutauaApkPath -Algorithm SHA256).Hash},
-        @{Package='tv.tutaua.app';Path=$tvApkPath;Sha256=(Get-FileHash -LiteralPath $tvApkPath -Algorithm SHA256).Hash}
+        @{Package='tv.tutaua.app';Path=$tvApkPath;Sha256=(Get-FileHash -LiteralPath $tvApkPath -Algorithm SHA256).Hash},
+        @{Package='com.yukista.tutaua.games';Path=$gamesApkPath;Sha256=(Get-FileHash -LiteralPath $gamesApkPath -Algorithm SHA256).Hash}
     );
     DisabledPackages=$packages;MissingDisabledPackages=$missingDisabled;Home=$home;Settings=$settings;
     WebViewAosp=($webView -match 'Current WebView package.*com\.android\.webview');Network=$network -match '1 received';

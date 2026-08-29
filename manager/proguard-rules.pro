@@ -1,0 +1,2 @@
+-keepattributes *Annotation*
+-dontwarn sun.security.x509.X509Key

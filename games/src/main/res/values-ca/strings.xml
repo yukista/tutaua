@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Tutaua Retro</string>
+    <string name="title">Jocs</string>
+    <string name="subtitle">Consoles de 8 i 16 bits</string>
+    <string name="rescan">TORNA A ESCANEJAR L’USB</string>
+    <string name="grant_access">PERMET L’ACCÉS</string>
+    <string name="permission_explanation">Tutaua necessita accés a l’emmagatzematge per detectar les ROMs de les memòries USB connectades.</string>
+    <string name="empty_library">No s’han trobat ROMs compatibles.\nCopia-les a la carpeta seleccionada.</string>
+    <string name="loading">Carregant biblioteca…</string>
+    <string name="game_error">No s’ha pogut obrir el joc</string>
+    <string name="tx5_controls">OK: A  ·  MENÚ: B  ·  NETFLIX: SELECT  ·  YOUTUBE: START  ·  ENRERE: SORTIR</string>
+</resources>
