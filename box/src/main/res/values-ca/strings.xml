@@ -54,4 +54,11 @@
     <string name="applying">Aplicant…</string>
     <string name="saved">Configuració desada</string>
     <string name="saved_timeout_failed">Configuració desada, però no s’ha pogut aplicar el repòs</string>
+    <string name="admin_pin_label">PIN administracio</string>
+    <string name="admin_pin_hint">4-8 digits</string>
+    <string name="admin_pin_required">Introdueix el PIN administracio</string>
+    <string name="admin_pin_wrong">PIN incorrecte</string>
+    <string name="invalid_admin_pin">El PIN ha de tenir entre 4 i 8 digits</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

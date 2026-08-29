@@ -54,4 +54,11 @@
     <string name="applying">Applying…</string>
     <string name="saved">Configuration saved</string>
     <string name="saved_timeout_failed">Configuration saved, but the screen timeout could not be applied</string>
+    <string name="admin_pin_label">Admin PIN</string>
+    <string name="admin_pin_hint">4-8 digits</string>
+    <string name="admin_pin_required">Enter the admin PIN</string>
+    <string name="admin_pin_wrong">Wrong PIN</string>
+    <string name="invalid_admin_pin">PIN must be 4-8 digits</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

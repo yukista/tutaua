@@ -9,7 +9,9 @@ import android.view.accessibility.AccessibilityEvent;
 
 public final class RemoteKeyService extends AccessibilityService {
     private static final String TAG = "TUTAUA_BOX_REMOTE";
-    private volatile String foregroundPackage = "";
+    private static volatile String currentForeground = "";
+
+    static String foregroundPackage() { return currentForeground; }
 
     @Override protected void onServiceConnected() {
         AccessibilityServiceInfo info = getServiceInfo();
@@ -19,7 +21,7 @@ public final class RemoteKeyService extends AccessibilityService {
     }
 
     @Override protected boolean onKeyEvent(KeyEvent event) {
-        if ("com.yukista.tutaua.games".equals(foregroundPackage)) return false;
+        if ("com.yukista.tutaua.games".equals(currentForeground)) return false;
         int libraryKey = BoxConfig.keyCodeOrDefault(
                 BoxConfig.preferences(this).getString(BoxConfig.LIBRARY_KEYCODE, String.valueOf(BoxConfig.DEFAULT_LIBRARY_KEYCODE)),
                 BoxConfig.DEFAULT_LIBRARY_KEYCODE);
@@ -48,7 +50,7 @@ public final class RemoteKeyService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event.getPackageName() != null) foregroundPackage = event.getPackageName().toString();
+        if (event.getPackageName() != null) currentForeground = event.getPackageName().toString();
     }
     @Override public void onInterrupt() { }
 }

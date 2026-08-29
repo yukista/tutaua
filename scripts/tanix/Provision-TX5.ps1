@@ -108,6 +108,8 @@ foreach ($item in @(
     if ($LASTEXITCODE -ne 0) { throw "La instal·lació de $($item.Name) ha fallat." }
 }
 Invoke-Adb $Target @('shell','pm','grant','com.yukista.tutaua.games','android.permission.READ_EXTERNAL_STORAGE') | Out-Null
+Invoke-Adb $Target @('shell','settings','put','secure','enabled_accessibility_services','com.yukista.tutaua.box/.RemoteKeyService') | Out-Null
+Invoke-Adb $Target @('shell','settings','put','secure','accessibility_enabled','1') | Out-Null
 $boxRequestId = [guid]::NewGuid().ToString('N')
 Invoke-Adb $Target @('logcat','-c') | Out-Null
 Invoke-Adb $Target @('shell','am','broadcast','-a','com.yukista.tutaua.box.action.PROVISION',

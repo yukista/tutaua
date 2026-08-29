@@ -1,17 +1,23 @@
 package com.yukista.tutaua.box;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,10 +27,12 @@ public final class HomeActivity extends Activity {
     private static final int BG = Color.rgb(7, 10, 18), SURFACE = Color.rgb(22, 28, 42), MUTED = Color.rgb(156, 166, 190);
     private final Handler handler = new Handler();
     private boolean backHeld;
+    private boolean backReady;
     private boolean resumedOnce;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state); immersive();
+        startService(new Intent(this, WatchdogService.class));
         LinearLayout page = new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(dp(72), dp(42), dp(72), dp(34)); page.setBackgroundColor(BG);
         LinearLayout header = new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
@@ -85,11 +93,51 @@ public final class HomeActivity extends Activity {
             return true;
         }
         if (event.getKeyCode() != KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(event);
-        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) { backHeld = true; handler.postDelayed(this::openAdmin, 4000); return true; }
-        if (event.getAction() == KeyEvent.ACTION_UP) { backHeld = false; handler.removeCallbacksAndMessages(null); return true; }
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            backHeld = true;
+            backReady = false;
+            handler.postDelayed(() -> backReady = true, 4000);
+            return true;
+        }
+        if (event.getAction() == KeyEvent.ACTION_UP) {
+            boolean shouldOpen = backHeld && backReady;
+            backHeld = false;
+            backReady = false;
+            handler.removeCallbacksAndMessages(null);
+            if (shouldOpen) openAdmin();
+            return true;
+        }
         return true;
     }
-    private void openAdmin() { if (backHeld) { backHeld = false; startActivity(new Intent(this, AdminActivity.class)); } }
+    private void openAdmin() {
+        String pin = BoxConfig.preferences(this).getString(BoxConfig.ADMIN_PIN, BoxConfig.DEFAULT_ADMIN_PIN);
+        if (pin == null || pin.isEmpty()) { startActivity(new Intent(this, AdminActivity.class)); return; }
+        showPinDialog(pin);
+    }
+
+    private void showPinDialog(String expected) {
+        EditText input = new EditText(this);
+        input.setSingleLine();
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        input.setHint(R.string.admin_pin_hint);
+        input.setTextColor(Color.WHITE);
+        input.setHintTextColor(Color.rgb(112, 122, 146));
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.admin_pin_required)
+                .setView(input)
+                .setPositiveButton(R.string.ok, (d, w) -> {
+                    String entered = input.getText() == null ? "" : input.getText().toString().trim();
+                    if (expected.equals(entered)) startActivity(new Intent(this, AdminActivity.class));
+                    else Toast.makeText(this, R.string.admin_pin_wrong, Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+        dialog.setOnShowListener(d -> {
+            if (dialog.getWindow() != null) dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            input.requestFocus();
+        });
+        dialog.show();
+    }
     private GradientDrawable panel(int fill, int stroke, int width) { GradientDrawable d = fill(fill, 18); d.setStroke(dp(width), stroke); return d; }
     private GradientDrawable fill(int color, int radius) { GradientDrawable d = new GradientDrawable(); d.setColor(color); d.setCornerRadius(dp(radius)); return d; }
     private void immersive() { getWindow().getDecorView().setSystemUiVisibility(5894); }

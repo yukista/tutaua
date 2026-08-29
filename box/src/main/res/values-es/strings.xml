@@ -54,4 +54,11 @@
     <string name="applying">Aplicando…</string>
     <string name="saved">Configuración guardada</string>
     <string name="saved_timeout_failed">Configuración guardada, pero no se ha podido aplicar el reposo</string>
+    <string name="admin_pin_label">PIN administracion</string>
+    <string name="admin_pin_hint">4-8 digitos</string>
+    <string name="admin_pin_required">Introduce el PIN administracion</string>
+    <string name="admin_pin_wrong">PIN incorrecto</string>
+    <string name="invalid_admin_pin">El PIN debe tener entre 4 y 8 digitos</string>
+    <string name="ok">Aceptar</string>
+    <string name="cancel">Cancelar</string>
 </resources>

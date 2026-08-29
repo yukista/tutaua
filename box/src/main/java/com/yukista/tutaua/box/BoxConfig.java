@@ -18,10 +18,12 @@ final class BoxConfig {
     static final String LIVE_TV_KEYCODE = "remote.live_tv_keycode";
     static final String GAMES_KEYCODE = "remote.games_keycode";
     static final String GAMES_ENABLED = "games.enabled";
+    static final String ADMIN_PIN = "admin.pin";
     static final int DEFAULT_LIBRARY_KEYCODE = 132; // KEYCODE_F2 on the validated TX5 remote.
     static final int DEFAULT_LIVE_TV_KEYCODE = 134; // KEYCODE_F4: physical YouTube button on the validated TX5 remote.
     static final int DEFAULT_GAMES_KEYCODE = 0;
     static final boolean DEFAULT_GAMES_ENABLED = true;
+    static final String DEFAULT_ADMIN_PIN = "0000";
     private static final String STORE = "box_config_v1";
 
     private BoxConfig() {}
@@ -43,6 +45,7 @@ final class BoxConfig {
         values.put(LIVE_TV_KEYCODE, preferences.getString(LIVE_TV_KEYCODE, String.valueOf(DEFAULT_LIVE_TV_KEYCODE)));
         values.put(GAMES_KEYCODE, preferences.getString(GAMES_KEYCODE, String.valueOf(DEFAULT_GAMES_KEYCODE)));
         values.put(GAMES_ENABLED, String.valueOf(preferences.getBoolean(GAMES_ENABLED, DEFAULT_GAMES_ENABLED)));
+        values.put(ADMIN_PIN, preferences.getString(ADMIN_PIN, DEFAULT_ADMIN_PIN));
         return values;
     }
 
@@ -63,6 +66,10 @@ final class BoxConfig {
     static boolean validTimeoutMinutes(int minutes) { return minutes >= 1 && minutes <= 120; }
 
     static boolean validKeyCode(int value) { return value >= 0 && value <= 400; }
+
+    static boolean validAdminPin(String value) {
+        return value != null && value.matches("\\d{4,8}");
+    }
 
     static int keyCodeOrDefault(String value, int defaultValue) {
         try { int parsed = Integer.parseInt(value); return validKeyCode(parsed) ? parsed : defaultValue; }

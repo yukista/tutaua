@@ -26,7 +26,7 @@ import java.util.Map;
 
 public final class AdminActivity extends Activity {
     private static final int BG=Color.rgb(7,10,18), SURFACE=Color.rgb(18,24,37), FIELD=Color.rgb(29,36,52), MUTED=Color.rgb(150,160,184);
-    private EditText jellyfin, tvApi, tvStream, updates, channel, timeout;
+    private EditText jellyfin, tvApi, tvStream, updates, channel, timeout, adminPin;
     private Button back, save, libraryKey, liveTvKey, gamesKey, captureTarget;
     private Switch gamesEnabled;
     private boolean consumeCapturedKeyUp;
@@ -52,6 +52,7 @@ public final class AdminActivity extends Activity {
         liveTvKey=keyAssignmentField(device,getString(R.string.live_tv_button),BoxConfig.keyCodeOrDefault(config.get(BoxConfig.LIVE_TV_KEYCODE),BoxConfig.DEFAULT_LIVE_TV_KEYCODE));
         gamesKey=keyAssignmentField(device,getString(R.string.games_button),BoxConfig.keyCodeOrDefault(config.get(BoxConfig.GAMES_KEYCODE),BoxConfig.DEFAULT_GAMES_KEYCODE));
         gamesEnabled = new Switch(this); gamesEnabled.setText(getString(R.string.games_enabled)); gamesEnabled.setTextColor(Color.WHITE); gamesEnabled.setTextSize(14); gamesEnabled.setChecked(Boolean.parseBoolean(config.get(BoxConfig.GAMES_ENABLED))); gamesEnabled.setFocusable(true); LinearLayout.LayoutParams gep=new LinearLayout.LayoutParams(-1,dp(52)); gep.topMargin=dp(8); device.addView(gamesEnabled,gep);
+        adminPin=field(device,getString(R.string.admin_pin_label),config.get(BoxConfig.ADMIN_PIN),getString(R.string.admin_pin_hint),InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         LinearLayout.LayoutParams left=new LinearLayout.LayoutParams(0,-1,1); left.rightMargin=dp(10); LinearLayout.LayoutParams right=new LinearLayout.LayoutParams(0,-1,1); right.leftMargin=dp(10); columns.addView(services,left); columns.addView(device,right);
 
         LinearLayout actions=new LinearLayout(this); actions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL); LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,dp(66)); ap.topMargin=dp(18); page.addView(actions,ap);
@@ -68,7 +69,9 @@ public final class AdminActivity extends Activity {
         String updateChannel=channel.getText().toString().trim(); if(!BoxConfig.validChannel(updateChannel)){toast(R.string.invalid_update_channel);return;}
         int minutes; try{minutes=Integer.parseInt(timeout.getText().toString().trim());}catch(Exception e){toast(R.string.invalid_screen_timeout);return;} if(!BoxConfig.validTimeoutMinutes(minutes)){toast(R.string.invalid_screen_timeout);return;}
         int libraryCode=(Integer)libraryKey.getTag(),liveTvCode=(Integer)liveTvKey.getTag(),gamesCode=(Integer)gamesKey.getTag();if(hasDuplicateNonZero(libraryCode,liveTvCode,gamesCode)){toast(R.string.duplicate_remote_button);return;}
-        boolean stored=BoxConfig.preferences(this).edit().putString(BoxConfig.JELLYFIN_URL,BoxConfig.trimUrl(jellyfin.getText().toString())).putString(BoxConfig.TV_API_URL,BoxConfig.trimUrl(tvApi.getText().toString())).putString(BoxConfig.TV_STREAM_URL,tvStream.getText().toString().trim()).putString(BoxConfig.UPDATE_MANIFEST_URL,updates.getText().toString().trim()).putString(BoxConfig.UPDATE_CHANNEL,updateChannel).putString(BoxConfig.SCREEN_TIMEOUT_MINUTES,String.valueOf(minutes)).putString(BoxConfig.LIBRARY_KEYCODE,String.valueOf(libraryCode)).putString(BoxConfig.LIVE_TV_KEYCODE,String.valueOf(liveTvCode)).putString(BoxConfig.GAMES_KEYCODE,String.valueOf(gamesCode)).putBoolean(BoxConfig.GAMES_ENABLED,gamesEnabled.isChecked()).commit();
+        String pinValue=adminPin.getText()==null?"":adminPin.getText().toString().trim();
+        if(!BoxConfig.validAdminPin(pinValue)){toast(R.string.invalid_admin_pin);return;}
+        boolean stored=BoxConfig.preferences(this).edit().putString(BoxConfig.JELLYFIN_URL,BoxConfig.trimUrl(jellyfin.getText().toString())).putString(BoxConfig.TV_API_URL,BoxConfig.trimUrl(tvApi.getText().toString())).putString(BoxConfig.TV_STREAM_URL,tvStream.getText().toString().trim()).putString(BoxConfig.UPDATE_MANIFEST_URL,updates.getText().toString().trim()).putString(BoxConfig.UPDATE_CHANNEL,updateChannel).putString(BoxConfig.SCREEN_TIMEOUT_MINUTES,String.valueOf(minutes)).putString(BoxConfig.LIBRARY_KEYCODE,String.valueOf(libraryCode)).putString(BoxConfig.LIVE_TV_KEYCODE,String.valueOf(liveTvCode)).putString(BoxConfig.GAMES_KEYCODE,String.valueOf(gamesCode)).putBoolean(BoxConfig.GAMES_ENABLED,gamesEnabled.isChecked()).putString(BoxConfig.ADMIN_PIN,pinValue).commit();
         if(!stored){toast(R.string.save_failed);return;} getContentResolver().notifyChange(ConfigProvider.URI,null); save.setEnabled(false); save.setText(R.string.applying); final int selected=minutes;
         new Thread(()->{boolean applied=DeviceSettings.applyScreenTimeoutMinutes(selected); runOnUiThread(()->{save.setEnabled(true);save.setText(R.string.save_changes);toast(applied?R.string.saved:R.string.saved_timeout_failed);});},"box-save-settings").start();
     }
