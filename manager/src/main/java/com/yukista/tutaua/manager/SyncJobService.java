@@ -23,10 +23,14 @@ public final class SyncJobService extends JobService {
             try { synchronize(); }
             catch (Exception error) { retry = true; Log.e("TUTAUA_MANAGER", "sync ERROR " + error.getClass().getSimpleName(), error); }
             jobFinished(parameters, retry);
+            Scheduler.scheduleHeartbeat(this);
         });
         return true;
     }
-    @Override public boolean onStopJob(JobParameters parameters) { return true; }
+    @Override public boolean onStopJob(JobParameters parameters) {
+        Scheduler.scheduleHeartbeat(this);
+        return true;
+    }
 
     private void synchronize() throws Exception {
         ManagerStore store = new ManagerStore(this); if (!store.enrolled()) return;
