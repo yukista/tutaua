@@ -40,6 +40,8 @@ public final class SyncJobService extends JobService {
             int version = response.getInt("desiredConfigVersion");
             if (!applyConfiguration(version, config)) throw new IllegalStateException("Box rejected configuration");
             store.configuration(version, config.toString());
+            int heartbeat = config.optInt("manager.heartbeat_seconds", 0);
+            if (heartbeat >= 30 && heartbeat <= 3600) store.heartbeatSeconds(heartbeat);
         }
         JSONArray commands = response.optJSONArray("commands");
         if (commands != null) for (int index = 0; index < commands.length(); index++) {

@@ -25,8 +25,12 @@ final class ManagerStore {
     String lanAddress() { return preferences.getString("lan_address", ""); }
     int configVersion() { return preferences.getInt("config_version", 0); }
     String reportedConfig() { return preferences.getString("reported_config", "{}"); }
+    int heartbeatSeconds() { return preferences.getInt("heartbeat_seconds", 0); }
     void configuration(int version, String json) {
         preferences.edit().putInt("config_version", version).putString("reported_config", json).apply();
+    }
+    void heartbeatSeconds(int seconds) {
+        preferences.edit().putInt("heartbeat_seconds", seconds).apply();
     }
     void enrollment(String server, String lanAddress, String deviceId, String token) throws Exception {
         preferences.edit().putString("server", trim(server)).putString("device_id", deviceId)
