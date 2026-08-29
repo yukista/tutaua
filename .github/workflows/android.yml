@@ -1,0 +1,77 @@
+name: Android build and release
+
+on:
+  push:
+    branches: [master]
+    tags: ["internal-*", "beta-*", "stable-*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Release channel
+        type: choice
+        options: [internal, beta, stable]
+        default: internal
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - run: chmod +x gradlew
+      - run: ./gradlew test assembleDebug
+
+  release:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_CHANNEL: ${{ inputs.channel || (startsWith(github.ref_name, 'stable-') && 'stable') || (startsWith(github.ref_name, 'beta-') && 'beta') || 'internal' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Restore signing material
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/tutaua-release.keystore"
+          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/tutaua-release.keystore" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+          chmod 600 keystore.properties "$RUNNER_TEMP/tutaua-release.keystore"
+      - run: chmod +x gradlew
+      - run: ./gradlew :app:assembleRelease :box:assembleRelease :games:assembleRelease :manager:assembleRelease
+      - name: Prepare verified release bundle
+        run: |
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          python scripts/Prepare-FleetArtifacts.py --aapt "$BUILD_TOOLS/aapt" --apksigner "$BUILD_TOOLS/apksigner" --channel "$RELEASE_CHANNEL" --output fleet-artifacts app/build/outputs/apk/release/app-release.apk box/build/outputs/apk/release/box-release.apk games/build/outputs/apk/release/games-release.apk manager/build/outputs/apk/release/manager-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fleet-artifacts
+          path: fleet-artifacts/
+          retention-days: 7
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    needs: release
+    runs-on: [self-hosted, linux, x64, tutaua-android]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: fleet-artifacts
+          path: fleet-artifacts
+      - run: python3 scripts/Publish-FleetArtifacts.py fleet-artifacts
