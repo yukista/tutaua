@@ -16,8 +16,8 @@ android {
         applicationId = "com.yukista.tutaua.manager"
         minSdk = 24
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.3.0"
+        versionCode = 13
+        versionName = "0.3.1"
         buildConfigField("String", "RELEASE_MANIFEST_PUBLIC_KEY", "\"/sory4AAVN8vWFR3zt/N6MK3ear5hgA7ud4GrBfFszw=\"")
     }
     signingConfigs {
