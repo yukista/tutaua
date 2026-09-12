@@ -43,8 +43,12 @@ final class UpdateInstaller {
             String archiveCertificate = certificate(archive);
             String catalogCertificate = release.getString("certificateSha256").toLowerCase(Locale.ROOT);
             if (!constantTime(catalogCertificate, archiveCertificate)) throw new SecurityException("catalog certificate mismatch");
-            PackageInfo installed = context.getPackageManager().getPackageInfo(packageName, signingFlags);
-            if (!constantTime(certificate(installed), archiveCertificate)) throw new SecurityException("signing certificate changed");
+            try {
+                PackageInfo installed = context.getPackageManager().getPackageInfo(packageName, signingFlags);
+                if (!constantTime(certificate(installed), archiveCertificate)) throw new SecurityException("signing certificate changed");
+            } catch (PackageManager.NameNotFoundException ignored) {
+                // The signed release manifest authorizes a first installation as well as an upgrade.
+            }
             long archiveVersion = Build.VERSION.SDK_INT >= 28 ? archive.getLongVersionCode() : archive.versionCode;
             if (archiveVersion != release.getLong("versionCode")) throw new SecurityException("version mismatch");
             return installPackage(context, apk, packageName);
