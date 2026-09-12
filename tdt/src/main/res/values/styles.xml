@@ -1,4 +1,5 @@
 <resources>
+    <color name="tdt_banner_background">#0B1520</color>
     <style name="TdtTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#F4C542</item>
