@@ -11,6 +11,7 @@ import org.json.JSONObject;
 final class Inventory {
     static final String[] PACKAGES = {
             "com.yukista.tutaua.manager", "com.yukista.tutaua.box", "com.yukista.tutaua",
+            "com.yukista.tutaua.tdt",
             "tv.tutaua.app", "com.yukista.tutaua.games"
     };
     static JSONObject collect(Context context) throws Exception {

@@ -53,11 +53,11 @@ jobs:
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/tutaua-release.keystore" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
           chmod 600 keystore.properties "$RUNNER_TEMP/tutaua-release.keystore"
       - run: chmod +x gradlew
-      - run: ./gradlew :app:assembleRelease :box:assembleRelease :games:assembleRelease :manager:assembleRelease
+      - run: ./gradlew :app:assembleRelease :box:assembleRelease :games:assembleRelease :manager:assembleRelease :tdt:assembleRelease
       - name: Prepare verified release bundle
         run: |
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          python scripts/Prepare-FleetArtifacts.py --aapt "$BUILD_TOOLS/aapt" --apksigner "$BUILD_TOOLS/apksigner" --channel "$RELEASE_CHANNEL" --output fleet-artifacts app/build/outputs/apk/release/app-release.apk box/build/outputs/apk/release/box-release.apk games/build/outputs/apk/release/games-release.apk manager/build/outputs/apk/release/manager-release.apk
+          python scripts/Prepare-FleetArtifacts.py --aapt "$BUILD_TOOLS/aapt" --apksigner "$BUILD_TOOLS/apksigner" --channel "$RELEASE_CHANNEL" --output fleet-artifacts app/build/outputs/apk/release/app-release.apk box/build/outputs/apk/release/box-release.apk games/build/outputs/apk/release/games-release.apk manager/build/outputs/apk/release/manager-release.apk tdt/build/outputs/apk/release/tdt-release.apk
       - uses: actions/upload-artifact@v4
         with:
           name: fleet-artifacts
