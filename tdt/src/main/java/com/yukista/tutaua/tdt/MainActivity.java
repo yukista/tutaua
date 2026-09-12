@@ -153,9 +153,24 @@ public final class MainActivity extends Activity {
             TextView name = text(18, active ? 0xFF101820 : Color.WHITE); name.setText((active ? "▶  " : "    ") + (i + 1) + "   " + channel.name); row.addView(name);
             TextView nowLabel = text(13, active ? 0xFF30363C : 0xFFD7E1EA); nowLabel.setSingleLine(true); nowLabel.setText(now == null ? "Sense programació" : "Ara · " + now.title); nowLabel.setPadding(dp(42), 0, 0, 0); row.addView(nowLabel);
         }
-        Channel active = channels.get(selected); Programme now=currentProgramme(active); epgTitle.setText(active.name + "  ·  Programació"); epgRows.removeAllViews();
-        int shown=0; for (Programme item : guide.getOrDefault(active.epgId, Collections.emptyList())) { if (item.end <= System.currentTimeMillis() || shown++ >= 6) continue; TextView event=text(15, item.start <= System.currentTimeMillis() ? 0xFFF4C542 : 0xFFD7E1EA); event.setMaxLines(1); event.setText(android.text.format.DateFormat.format("HH:mm", item.start) + "  " + item.title); event.setPadding(0, dp(5), 0, dp(5)); epgRows.addView(event); }
-        if (shown == 0) { TextView empty=text(14, 0xFF9EAFBE); empty.setText(now == null ? "Sense informació de programació" : now.title); epgRows.addView(empty); }
+        Channel active = channels.get(selected); Programme now=currentProgramme(active); epgTitle.setText(active.name + "  ·  GUIA"); epgRows.removeAllViews();
+        if (now != null) {
+            LinearLayout live = new LinearLayout(this); live.setOrientation(LinearLayout.VERTICAL); live.setPadding(dp(16), dp(12), dp(16), dp(12)); live.setBackgroundColor(0xFF243448); epgRows.addView(live, new LinearLayout.LayoutParams(-1, -2));
+            TextView liveLabel=text(12, 0xFFF4C542); liveLabel.setText("●  ARA EN DIRECTE"); live.addView(liveLabel);
+            TextView liveTitle=text(20, Color.WHITE); liveTitle.setText(now.title); liveTitle.setPadding(0, dp(3), 0, dp(9)); live.addView(liveTitle);
+            LinearLayout progress = new LinearLayout(this); progress.setOrientation(LinearLayout.HORIZONTAL); progress.setBackgroundColor(0xFF425466); live.addView(progress, new LinearLayout.LayoutParams(-1, dp(4)));
+            long elapsed=System.currentTimeMillis()-now.start, duration=Math.max(1, now.end-now.start); float fraction=Math.max(.03f, Math.min(.97f, elapsed / (float) duration));
+            View done = new View(this); done.setBackgroundColor(0xFFF4C542); progress.addView(done, new LinearLayout.LayoutParams(0, -1, fraction));
+            View remaining = new View(this); progress.addView(remaining, new LinearLayout.LayoutParams(0, -1, 1f-fraction));
+        }
+        TextView upcomingLabel=text(12, 0xFF9EAFBE); upcomingLabel.setText("A CONTINUACIÓ"); upcomingLabel.setPadding(0, dp(16), 0, dp(5)); epgRows.addView(upcomingLabel);
+        int shown=0; for (Programme item : guide.getOrDefault(active.epgId, Collections.emptyList())) {
+            if (item.start <= System.currentTimeMillis() || shown++ >= 5) continue;
+            LinearLayout event = new LinearLayout(this); event.setGravity(Gravity.CENTER_VERTICAL); event.setPadding(0, dp(5), 0, dp(5)); epgRows.addView(event, new LinearLayout.LayoutParams(-1, -2));
+            TextView time=text(15, 0xFFF4C542); time.setText(android.text.format.DateFormat.format("HH:mm", item.start)); event.addView(time, new LinearLayout.LayoutParams(dp(58), -2));
+            TextView title=text(16, 0xFFD7E1EA); title.setSingleLine(true); title.setText(item.title); event.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+        }
+        if (shown == 0 && now == null) { TextView empty=text(14, 0xFF9EAFBE); empty.setText("Sense informació de programació"); epgRows.addView(empty); }
     }
     private void hideGuide() { guideVisible=false; guidePanel.setVisibility(View.GONE); epgPanel.setVisibility(View.GONE); playerView.setLayoutParams(fullScreen()); scheduleHeaderHide(); }
     private void selectOffset(int offset) { if(channels.isEmpty()) return; selected=(selected+offset+channels.size())%channels.size(); source=0; playSelected(); if(guideVisible) renderGuide(); }
