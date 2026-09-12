@@ -10,6 +10,8 @@
     <string name="live_tv_title">Televisió en directe</string>
     <string name="live_tv_subtitle">Canals en directe amb canvi ràpid i automàtic</string>
     <string name="games_title">Jocs</string>
+    <string name="tdt_title">TDT</string>
+    <string name="tdt_subtitle">Els teus canals de televisió configurats remotament</string>
     <string name="games_subtitle">Els teus jocs de consoles de 8 i 16 bits</string>
     <string name="admin_hint">Manté premut ENRERE durant 4 segons per obrir Administració</string>
     <string name="open">OBRIR  →</string>

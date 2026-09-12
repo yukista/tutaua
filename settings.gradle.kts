@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Tutaua"
-include(":app", ":box", ":games", ":manager")
+include(":app", ":box", ":games", ":manager", ":tdt")

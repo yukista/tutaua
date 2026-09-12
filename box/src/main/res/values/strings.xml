@@ -10,6 +10,8 @@
     <string name="live_tv_title">Live TV</string>
     <string name="live_tv_subtitle">Live channels with fast, automatic switching</string>
     <string name="games_title">Games</string>
+    <string name="tdt_title">TDT</string>
+    <string name="tdt_subtitle">Your remotely configured television channels</string>
     <string name="games_subtitle">Your 8 and 16-bit console games</string>
     <string name="admin_hint">Hold BACK for 4 seconds to open Administration</string>
     <string name="open">OPEN  →</string>

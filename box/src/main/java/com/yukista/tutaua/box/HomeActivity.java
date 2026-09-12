@@ -50,6 +50,8 @@ public final class HomeActivity extends Activity {
         choices.addView(library, card()); choices.addView(tv, card());
         if (BoxConfig.preferences(this).getBoolean(BoxConfig.GAMES_ENABLED, BoxConfig.DEFAULT_GAMES_ENABLED)) {
             View games = choice("+", getString(R.string.games_title), getString(R.string.games_subtitle), "com.yukista.tutaua.games", Color.rgb(241, 164, 76));
+        View tdt = choice("▣", getString(R.string.tdt_title), getString(R.string.tdt_subtitle), "com.yukista.tutaua.tdt", Color.rgb(244, 197, 66));
+        choices.addView(tdt, card());
             choices.addView(games, card());
         }
         TextView help = label(getString(R.string.admin_hint), 13, Color.rgb(112, 122, 146), false); help.setGravity(Gravity.CENTER); page.addView(help, new LinearLayout.LayoutParams(-1, dp(34)));

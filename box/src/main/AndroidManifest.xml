@@ -11,6 +11,7 @@
         android:protectionLevel="signature" />
     <queries>
         <package android:name="com.yukista.tutaua" />
+        <package android:name="com.yukista.tutaua.tdt" />
         <package android:name="tv.tutaua.app" />
         <package android:name="com.yukista.tutaua.games" />
     </queries>

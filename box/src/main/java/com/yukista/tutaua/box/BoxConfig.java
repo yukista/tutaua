@@ -11,6 +11,7 @@ final class BoxConfig {
     static final String JELLYFIN_URL = "jellyfin.base_url";
     static final String TV_API_URL = "tv.api_base_url";
     static final String TV_STREAM_URL = "tv.stream_url";
+    static final String TDT_CATALOG = "tdt.catalog";
     static final String UPDATE_MANIFEST_URL = "updates.manifest_url";
     static final String UPDATE_CHANNEL = "updates.channel";
     static final String SCREEN_TIMEOUT_MINUTES = "device.screen_timeout_minutes";
@@ -38,6 +39,7 @@ final class BoxConfig {
         values.put(JELLYFIN_URL, preferences.getString(JELLYFIN_URL, ""));
         values.put(TV_API_URL, preferences.getString(TV_API_URL, ""));
         values.put(TV_STREAM_URL, preferences.getString(TV_STREAM_URL, ""));
+        values.put(TDT_CATALOG, preferences.getString(TDT_CATALOG, ""));
         values.put(UPDATE_MANIFEST_URL, preferences.getString(UPDATE_MANIFEST_URL, ""));
         values.put(UPDATE_CHANNEL, preferences.getString(UPDATE_CHANNEL, "stable"));
         values.put(SCREEN_TIMEOUT_MINUTES, preferences.getString(SCREEN_TIMEOUT_MINUTES, "10"));

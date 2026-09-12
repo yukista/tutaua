@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory = $true)][string]$TutauaApk,
     [Parameter(Mandatory = $true)][string]$BoxApk,
     [Parameter(Mandatory = $true)][string]$TvApk,
+    [Parameter(Mandatory = $true)][string]$TdtApk,
     [Parameter(Mandatory = $true)][string]$GamesApk,
     [Parameter(Mandatory = $true)][uri]$JellyfinServer,
     [Parameter(Mandatory = $true)][uri]$TvApiUrl,
@@ -28,6 +29,7 @@ $tutauaApkPath = (Resolve-Path -LiteralPath $TutauaApk).Path
 $boxApkPath = (Resolve-Path -LiteralPath $BoxApk).Path
 $tvApkPath = (Resolve-Path -LiteralPath $TvApk).Path
 $gamesApkPath = (Resolve-Path -LiteralPath $GamesApk).Path
+$tdtApkPath = (Resolve-Path -LiteralPath $TdtApk).Path
 $deviceAddress = ($Target -split ':')[0]
 $stableTarget = "${deviceAddress}:5555"
 $screenOffTimeoutMs = $ScreenOffTimeoutMinutes * 60000
@@ -182,6 +184,7 @@ $report = [ordered]@{Timestamp=(Get-Date).ToString('o');Success=$success;Identit
         @{Package='com.yukista.tutaua.games';Path=$gamesApkPath;Sha256=(Get-FileHash -LiteralPath $gamesApkPath -Algorithm SHA256).Hash}
     );
     DisabledPackages=$packages;MissingDisabledPackages=$missingDisabled;Home=$home;Settings=$settings;
+    @{Name='Tutaua TDT';Path=$tdtApkPath},
     WebViewAosp=($webView -match 'Current WebView package.*com\.android\.webview');Network=$network -match '1 received';
     ScreenOffTimeoutMinutes=($configuredScreenOffTimeout / 60000);
     LabAdbKept=[bool]$KeepLabAdb}

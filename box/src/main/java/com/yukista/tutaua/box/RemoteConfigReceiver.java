@@ -20,6 +20,7 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
             Map<String, String> current = BoxConfig.values(context);
             String jellyfin = value(incoming, BoxConfig.JELLYFIN_URL, current);
             String tvApi = value(incoming, BoxConfig.TV_API_URL, current);
+            String tdtCatalog = catalog(incoming, current);
             String tvStream = value(incoming, BoxConfig.TV_STREAM_URL, current);
             String updates = value(incoming, BoxConfig.UPDATE_MANIFEST_URL, current);
             String channel = value(incoming, BoxConfig.UPDATE_CHANNEL, current);
@@ -35,6 +36,7 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
                     || duplicate(library, liveTv, games)) throw new IllegalArgumentException("invalid configuration");
             SharedPreferences.Editor editor = BoxConfig.preferences(context).edit()
                     .putString(BoxConfig.JELLYFIN_URL, BoxConfig.trimUrl(jellyfin))
+                    .putString(BoxConfig.TDT_CATALOG, tdtCatalog)
                     .putString(BoxConfig.TV_API_URL, BoxConfig.trimUrl(tvApi))
                     .putString(BoxConfig.TV_STREAM_URL, tvStream.trim())
                     .putString(BoxConfig.UPDATE_MANIFEST_URL, updates.trim())
@@ -57,6 +59,12 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
     }
     private static String value(JSONObject source, String key, Map<String, String> fallback) {
         return source.has(key) ? source.optString(key, "") : fallback.get(key);
+    private static String catalog(JSONObject source, Map<String, String> fallback) {
+        if (!source.has("tutaua_tdt")) return fallback.get(BoxConfig.TDT_CATALOG);
+        JSONObject catalog = source.optJSONObject("tutaua_tdt");
+        if (catalog == null) throw new IllegalArgumentException("invalid_tdt_catalog");
+        return catalog.toString();
+    }
     }
     private static boolean duplicate(int first, int second, int third) {
         return first != 0 && (first == second || first == third) || second != 0 && second == third;
