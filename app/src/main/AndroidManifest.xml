@@ -6,6 +6,7 @@
     <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
+    <queries><provider android:authorities="com.yukista.tutaua.box.config" /></queries>
     <application
         android:allowBackup="false"
         android:banner="@drawable/banner"

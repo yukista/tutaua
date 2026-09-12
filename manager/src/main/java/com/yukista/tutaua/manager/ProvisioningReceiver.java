@@ -23,7 +23,11 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 ManagerStore store = new ManagerStore(context);
-                if (store.enrolled()) throw new IllegalStateException("already enrolled");
+                if (store.enrolled()) {
+                    Scheduler.schedule(context);
+                    Log.i("TUTAUA_MANAGER", "enrollment ALREADY_ENROLLED");
+                    return;
+                }
                 JSONObject response = ControlClient.enroll(context, server, lanAddress, code);
                 store.enrollment(response.getString("apiBaseUrl"), lanAddress, response.getString("deviceId"), response.getString("deviceToken"));
                 Scheduler.schedule(context); Log.i("TUTAUA_MANAGER", "enrollment SUCCESS");

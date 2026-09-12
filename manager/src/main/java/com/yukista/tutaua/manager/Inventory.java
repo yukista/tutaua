@@ -25,7 +25,8 @@ final class Inventory {
         PackageManager packages = context.getPackageManager();
         for (String name : PACKAGES) try {
             PackageInfo info = packages.getPackageInfo(name, 0);
-            applications.put(name, new JSONObject().put("versionCode", info.getLongVersionCode())
+            long versionCode = Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+            applications.put(name, new JSONObject().put("versionCode", versionCode)
                     .put("versionName", info.versionName == null ? "" : info.versionName));
         } catch (PackageManager.NameNotFoundException ignored) {}
         root.put("applications", applications);

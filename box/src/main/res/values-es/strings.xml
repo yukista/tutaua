@@ -9,9 +9,9 @@
     <string name="library_subtitle">Tu biblioteca, favoritos y contenido pendiente</string>
     <string name="live_tv_title">Televisión en directo</string>
     <string name="live_tv_subtitle">Canales en directo con cambio rápido y automático</string>
-    <string name="games_title">Juegos</string>
     <string name="tdt_title">TDT</string>
     <string name="tdt_subtitle">Tus canales de televisión configurados remotamente</string>
+    <string name="games_title">Juegos</string>
     <string name="games_subtitle">Tus juegos de consolas de 8 y 16 bits</string>
     <string name="admin_hint">Mantén pulsado ATRÁS durante 4 segundos para abrir Administración</string>
     <string name="open">ABRIR  →</string>
@@ -29,8 +29,8 @@
     <string name="tv_stream_hint">Se genera desde la API si queda vacío</string>
     <string name="device_updates">DISPOSITIVO Y ACTUALIZACIONES</string>
     <string name="device_updates_helper">Comportamiento y mantenimiento de la caja</string>
-    <string name="update_manifest">Manifiesto de actualizaciones</string>
-    <string name="update_manifest_hint">URL del catálogo</string>
+    <string name="update_manifest">Catálogo anterior de actualizaciones (opcional)</string>
+    <string name="update_manifest_hint">Manager descarga las actualizaciones desde Fleet</string>
     <string name="update_channel">Canal de actualización</string>
     <string name="update_channel_hint">stable</string>
     <string name="screen_timeout">Reposo de pantalla (minutos)</string>
@@ -63,4 +63,14 @@
     <string name="invalid_admin_pin">El PIN debe tener entre 4 y 8 digitos</string>
     <string name="ok">Aceptar</string>
     <string name="cancel">Cancelar</string>
+    <string name="urls_local">Sugerir locales</string>
+    <string name="urls_remote">Sugerir remotas</string>
+    <string name="fleet_server">Servidor de gestión Fleet (HTTPS)</string>
+    <string name="fleet_keep_enrolled">Vacío: conserva el servidor de inscripción</string>
+    <string name="fleet_lan">IP local de Fleet (opcional)</string>
+    <string name="fleet_lan_hint">Vacío: utiliza solo el dominio público</string>
+    <string name="invalid_fleet">Fleet necesita HTTPS y una IP privada válida o vacía</string>
+    <string name="local_urls_suggested">Direcciones locales sugeridas. Revísalas y guarda los cambios.</string>
+    <string name="remote_urls_suggested">Direcciones remotas sugeridas; la ruta TV debe estar publicada. Revisa y guarda.</string>
+    <string name="box_identifier">BOX %1$s</string>
 </resources>

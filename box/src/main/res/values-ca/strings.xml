@@ -3,15 +3,16 @@
     <string name="brand_name">TUTAUA</string>
     <string name="brand_box">  BOX</string>
     <string name="system_ready">●  Sistema preparat</string>
+    <string name="box_identifier">BOX %1$s</string>
     <string name="home_title">Què vols fer?</string>
     <string name="home_intro">Tot el teu entreteniment, en un sol lloc.</string>
     <string name="library_title">Sèries i pel·lícules</string>
     <string name="library_subtitle">La teva biblioteca, favorits i contingut pendent</string>
     <string name="live_tv_title">Televisió en directe</string>
     <string name="live_tv_subtitle">Canals en directe amb canvi ràpid i automàtic</string>
-    <string name="games_title">Jocs</string>
     <string name="tdt_title">TDT</string>
     <string name="tdt_subtitle">Els teus canals de televisió configurats remotament</string>
+    <string name="games_title">Jocs</string>
     <string name="games_subtitle">Els teus jocs de consoles de 8 i 16 bits</string>
     <string name="admin_hint">Manté premut ENRERE durant 4 segons per obrir Administració</string>
     <string name="open">OBRIR  →</string>
@@ -29,8 +30,8 @@
     <string name="tv_stream_hint">Es genera des de l’API si queda buit</string>
     <string name="device_updates">DISPOSITIU I ACTUALITZACIONS</string>
     <string name="device_updates_helper">Comportament i manteniment de la caixa</string>
-    <string name="update_manifest">Manifest d’actualitzacions</string>
-    <string name="update_manifest_hint">URL del catàleg</string>
+    <string name="update_manifest">Catàleg antic d’actualitzacions (opcional)</string>
+    <string name="update_manifest_hint">Manager descarrega les actualitzacions des de Fleet</string>
     <string name="update_channel">Canal d’actualització</string>
     <string name="update_channel_hint">stable</string>
     <string name="screen_timeout">Repòs de pantalla (minuts)</string>
@@ -63,4 +64,13 @@
     <string name="invalid_admin_pin">El PIN ha de tenir entre 4 i 8 digits</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="urls_local">Suggerir locals</string>
+    <string name="urls_remote">Suggerir remotes</string>
+    <string name="fleet_server">Servidor de gestió Fleet (HTTPS)</string>
+    <string name="fleet_keep_enrolled">Buit: conserva el servidor de l’enrolament</string>
+    <string name="fleet_lan">IP local de Fleet (opcional)</string>
+    <string name="fleet_lan_hint">Buit: utilitza només el domini públic</string>
+    <string name="invalid_fleet">Fleet necessita HTTPS i una IP privada vàlida o buida</string>
+    <string name="local_urls_suggested">Adreces locals suggerides. Revisa-les i desa els canvis.</string>
+    <string name="remote_urls_suggested">Adreces remotes suggerides; la ruta TV necessita estar publicada. Revisa-les i desa.</string>
 </resources>

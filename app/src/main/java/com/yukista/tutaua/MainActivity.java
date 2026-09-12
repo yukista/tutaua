@@ -1372,6 +1372,8 @@ public class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        String configured = BoxConfigClient.get(this, "jellyfin.base_url").trim().replaceAll("/+$", "");
+        if (!configured.isEmpty() && !configured.equals(server)) { recreate(); return; }
         immersive();
         if (returnHomeOnResume && !token.isEmpty()) {
             returnHomeOnResume = false;

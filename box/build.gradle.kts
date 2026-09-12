@@ -15,8 +15,8 @@ android {
         applicationId = "com.yukista.tutaua.box"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.3.1"
+        versionCode = 9
+        versionName = "0.5.0"
     }
 
     signingConfigs {

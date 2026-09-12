@@ -1,7 +1,12 @@
 package com.yukista.tutaua.manager;
 
 import android.content.Context;
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.app.PendingIntent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Build;
@@ -15,6 +20,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.io.OutputStream;
 
 final class UpdateInstaller {
     private static final Set<String> ALLOWED = new HashSet<>(Arrays.asList(Inventory.PACKAGES));
@@ -23,23 +33,21 @@ final class UpdateInstaller {
         verifyManifest(release);
         String packageName = release.getString("applicationId");
         if (!ALLOWED.contains(packageName)) throw new SecurityException("package is not allowed");
-        File apk = ControlClient.download(context, release.getString("url"), store.token(), store.lanAddress(), packageName);
+        File apk = ControlClient.download(context, ArtifactUrls.atServer(release.getString("url"), store.server()), store.token(), store.lanAddress(), packageName);
         try {
             String expectedHash = release.getString("sha256").toLowerCase(Locale.ROOT);
             if (!constantTime(expectedHash, sha256(apk))) throw new SecurityException("APK hash mismatch");
-            PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), PackageManager.GET_SIGNING_CERTIFICATES);
+            int signingFlags = Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
+            PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), signingFlags);
             if (archive == null || !packageName.equals(archive.packageName)) throw new SecurityException("APK package mismatch");
             String archiveCertificate = certificate(archive);
             String catalogCertificate = release.getString("certificateSha256").toLowerCase(Locale.ROOT);
             if (!constantTime(catalogCertificate, archiveCertificate)) throw new SecurityException("catalog certificate mismatch");
-            PackageInfo installed = context.getPackageManager().getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES);
+            PackageInfo installed = context.getPackageManager().getPackageInfo(packageName, signingFlags);
             if (!constantTime(certificate(installed), archiveCertificate)) throw new SecurityException("signing certificate changed");
-            if (archive.getLongVersionCode() != release.getLong("versionCode")) throw new SecurityException("version mismatch");
-            Process process = new ProcessBuilder("su", "-c", "pm install -r --user 0 " + shellQuote(apk.getAbsolutePath()))
-                    .redirectErrorStream(true).start();
-            String output = new String(process.getInputStream().readAllBytes());
-            if (process.waitFor() != 0 || !output.contains("Success")) throw new IllegalStateException("install failed");
-            return output.trim();
+            long archiveVersion = Build.VERSION.SDK_INT >= 28 ? archive.getLongVersionCode() : archive.versionCode;
+            if (archiveVersion != release.getLong("versionCode")) throw new SecurityException("version mismatch");
+            return installPackage(context, apk, packageName);
         } finally { if (!apk.delete()) apk.deleteOnExit(); }
     }
 
@@ -80,6 +88,56 @@ final class UpdateInstaller {
     }
     private static boolean constantTime(String first, String second) {
         return MessageDigest.isEqual(first.getBytes(java.nio.charset.StandardCharsets.US_ASCII), second.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+    }
+    private static String installPackage(Context context, File apk, String packageName) throws Exception {
+        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        params.setAppPackageName(packageName);
+        if (Build.VERSION.SDK_INT >= 31) params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+        int sessionId = installer.createSession(params);
+        String action = context.getPackageName() + ".INSTALL_RESULT." + sessionId;
+        CountDownLatch completed = new CountDownLatch(1); AtomicInteger status = new AtomicInteger(PackageInstaller.STATUS_FAILURE);
+        AtomicReference<String> statusMessage = new AtomicReference<>("");
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context ignored, Intent intent) {
+                status.set(intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE));
+                statusMessage.set(intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
+                completed.countDown();
+            }
+        };
+        if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(receiver, new IntentFilter(action), Context.RECEIVER_NOT_EXPORTED);
+        else context.registerReceiver(receiver, new IntentFilter(action));
+        try (PackageInstaller.Session session = installer.openSession(sessionId)) {
+            try (FileInputStream input = new FileInputStream(apk);
+                 OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
+                byte[] buffer = new byte[64 * 1024]; int read;
+                while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+                session.fsync(output);
+            }
+            PendingIntent callback = PendingIntent.getBroadcast(context, sessionId, new Intent(action).setPackage(context.getPackageName()),
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+            session.commit(callback.getIntentSender());
+        }
+        try {
+            if (!completed.await(120, TimeUnit.SECONDS)) return installAsRoot(apk, "PackageInstaller timeout");
+            if (status.get() != PackageInstaller.STATUS_SUCCESS) {
+                return installAsRoot(apk, "PackageInstaller status " + status.get() + ": " + statusMessage.get());
+            }
+            return "Success (PackageInstaller)";
+        } finally { context.unregisterReceiver(receiver); }
+    }
+    private static String installAsRoot(File apk, String packageInstallerError) throws Exception {
+        Process process = new ProcessBuilder("su", "-c", "pm install -r --user 0 " + shellQuote(apk.getAbsolutePath()))
+                .redirectErrorStream(true).start();
+        java.io.ByteArrayOutputStream captured = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[4096]; int read;
+        while ((read = process.getInputStream().read(buffer)) != -1) captured.write(buffer, 0, read);
+        int exitCode = process.waitFor();
+        String output = captured.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+        if (exitCode != 0 || !output.contains("Success")) {
+            throw new IllegalStateException(packageInstallerError + "; root install failed: " + output.trim());
+        }
+        return "Success (root fallback)";
     }
     private static String shellQuote(String value) { return "'" + value.replace("'", "'\\''") + "'"; }
     private UpdateInstaller() {}

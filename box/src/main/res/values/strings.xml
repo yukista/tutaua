@@ -3,15 +3,16 @@
     <string name="brand_name">TUTAUA</string>
     <string name="brand_box">  BOX</string>
     <string name="system_ready">●  System ready</string>
+    <string name="box_identifier">BOX %1$s</string>
     <string name="home_title">What do you want to do?</string>
     <string name="home_intro">All your entertainment in one place.</string>
     <string name="library_title">Shows and movies</string>
     <string name="library_subtitle">Your library, favourites and unwatched content</string>
     <string name="live_tv_title">Live TV</string>
     <string name="live_tv_subtitle">Live channels with fast, automatic switching</string>
-    <string name="games_title">Games</string>
     <string name="tdt_title">TDT</string>
     <string name="tdt_subtitle">Your remotely configured television channels</string>
+    <string name="games_title">Games</string>
     <string name="games_subtitle">Your 8 and 16-bit console games</string>
     <string name="admin_hint">Hold BACK for 4 seconds to open Administration</string>
     <string name="open">OPEN  →</string>
@@ -29,8 +30,8 @@
     <string name="tv_stream_hint">Generated from the API when left empty</string>
     <string name="device_updates">DEVICE AND UPDATES</string>
     <string name="device_updates_helper">Box behaviour and maintenance</string>
-    <string name="update_manifest">Update manifest</string>
-    <string name="update_manifest_hint">Catalogue URL</string>
+    <string name="update_manifest">Legacy update catalog (optional)</string>
+    <string name="update_manifest_hint">Manager downloads updates from Fleet</string>
     <string name="update_channel">Update channel</string>
     <string name="update_channel_hint">stable</string>
     <string name="screen_timeout">Screen timeout (minutes)</string>
@@ -63,4 +64,13 @@
     <string name="invalid_admin_pin">PIN must be 4-8 digits</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="urls_local">Suggest local</string>
+    <string name="urls_remote">Suggest remote</string>
+    <string name="fleet_server">Fleet management server (HTTPS)</string>
+    <string name="fleet_keep_enrolled">Empty: keep the enrolled server</string>
+    <string name="fleet_lan">Fleet local IP (optional)</string>
+    <string name="fleet_lan_hint">Empty: use only the public hostname</string>
+    <string name="invalid_fleet">Fleet requires HTTPS and a valid private IP or an empty value</string>
+    <string name="local_urls_suggested">Local addresses suggested. Review and save your changes.</string>
+    <string name="remote_urls_suggested">Remote addresses suggested; the TV route must be published. Review and save.</string>
 </resources>

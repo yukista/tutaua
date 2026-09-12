@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.yukista.tutaua.permission.MANAGE_BOX" />
     <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <permission
@@ -10,9 +11,10 @@
         android:name="com.yukista.tutaua.permission.MANAGE_BOX"
         android:protectionLevel="signature" />
     <queries>
+        <package android:name="com.yukista.tutaua.manager" />
         <package android:name="com.yukista.tutaua" />
-        <package android:name="com.yukista.tutaua.tdt" />
         <package android:name="tv.tutaua.app" />
+        <package android:name="com.yukista.tutaua.tdt" />
         <package android:name="com.yukista.tutaua.games" />
     </queries>
 
@@ -43,6 +45,7 @@
             android:permission="com.yukista.tutaua.permission.MANAGE_BOX">
             <intent-filter><action android:name="com.yukista.tutaua.box.action.APPLY_REMOTE_CONFIG" /></intent-filter>
         </receiver>
+        <receiver android:name=".UpdateHistoryReceiver" android:exported="true" android:permission="com.yukista.tutaua.permission.MANAGE_BOX"><intent-filter><action android:name="com.yukista.tutaua.box.action.UPDATE_RECORDED" /></intent-filter></receiver>
         <service
             android:name=".RemoteKeyService"
             android:exported="false"
@@ -62,6 +65,7 @@
             android:name=".AdminActivity"
             android:exported="false"
             android:windowSoftInputMode="stateAlwaysHidden|adjustNothing" />
+        <activity android:name=".UpdatesActivity" android:exported="false" />
         <activity
             android:name=".HomeActivity"
             android:exported="true"

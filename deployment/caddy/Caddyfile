@@ -3,7 +3,7 @@ tutaua-demo.duckdns.org {
 		output discard
 	}
 
-	reverse_proxy 127.0.0.1:8097
+	reverse_proxy 127.0.0.1:8096
 }
 
 tutaua-app.duckdns.org {
@@ -12,5 +12,24 @@ tutaua-app.duckdns.org {
 		output discard
 	}
 
-	reverse_proxy 127.0.0.1:8088
+	@admin {
+		path /admin /admin/* /control/admin /control/admin/*
+		remote_ip private_ranges
+	}
+	handle @admin {
+		uri strip_prefix /control
+		reverse_proxy 127.0.0.1:8091
+	}
+
+	handle_path /control/* {
+		reverse_proxy 127.0.0.1:8091
+	}
+
+	handle_path /tv/* {
+		reverse_proxy 127.0.0.1:8092
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8088
+	}
 }

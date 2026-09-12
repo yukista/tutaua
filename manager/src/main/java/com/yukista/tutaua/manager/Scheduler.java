@@ -13,7 +13,8 @@ final class Scheduler {
         ComponentName service = new ComponentName(context, SyncJobService.class);
         jobs.cancel(HEARTBEAT);
         jobs.schedule(new JobInfo.Builder(HEARTBEAT, service).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setMinimumLatency(heartbeatMillis(context)).setPersisted(true).build());
+                .setMinimumLatency(heartbeatMillis(context)).setBackoffCriteria(30_000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
+                .setPersisted(true).build());
         jobs.schedule(new JobInfo.Builder(IMMEDIATE, service).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setMinimumLatency(1_000L).setOverrideDeadline(30_000L).build());
     }
@@ -22,7 +23,8 @@ final class Scheduler {
         ComponentName service = new ComponentName(context, SyncJobService.class);
         jobs.cancel(HEARTBEAT);
         jobs.schedule(new JobInfo.Builder(HEARTBEAT, service).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setMinimumLatency(heartbeatMillis(context)).setPersisted(true).build());
+                .setMinimumLatency(heartbeatMillis(context)).setBackoffCriteria(30_000L, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
+                .setPersisted(true).build());
     }
     private static long heartbeatMillis(Context context) {
         int seconds = new ManagerStore(context).heartbeatSeconds();

@@ -1,75 +1,78 @@
 # Provisionament desatès del Tanix TX5
 
-## Contracte
+Per configurar connexions locals o remotes, consulteu [CONNECTIONS.md](CONNECTIONS.md).
 
-La caixa ha de tenir Android iniciat, xarxa configurada i ADB autoritzat. Des
-d'aquest punt, `Provision-TX5.ps1` executa tot el procés sense intervenció:
+## Abans de començar
 
-1. identifica model, device, maquinari, build, RAM i mida d'eMMC;
-2. rebutja unitats diferents del prototip validat;
-3. instal·la les APK signades de Tutaua Box, Tutaua i Tutaua TV;
-4. configura totes les URLs i autentica Jellyfin, desant només el token xifrat;
-5. aplica les 22 quarantenes validades de fabricant i Google;
-6. reinicia, reconnecta i valida HOME, Settings, WebView AOSP i xarxa;
-7. escriu un informe JSON sense secrets;
-8. tanca ADB TCP persistent, excepte si s'indica `-KeepLabAdb`.
+A la caixa nova només cal completar l'assistent sense compte de Google, connectar-la
+a la xarxa, activar les opcions de desenvolupador i habilitar la depuració ADB sense
+fil. Anota l'adreça `IP:port` que mostra Android i accepta l'empremta de l'ordinador.
 
-El receptor Android de provisionament exigeix `android.permission.DUMP`, que el
-compte `shell` d'ADB té però una aplicació ordinària no. La contrasenya només es
-fa servir per obtenir un token Jellyfin i no es desa a la caixa ni a l'informe.
+A partir d'aquí una sola execució:
 
-## Prova de compatibilitat sense canvis
+1. valida el maquinari i activa temporalment ADB al port 5555;
+2. neutralitza de manera reversible el programari de fabricant i Google validat;
+3. instal·la i configura les sis aplicacions Tutaua;
+4. converteix Tutaua Manager en aplicació privilegiada del sistema;
+5. autentica Jellyfin i desa només el token xifrat;
+6. crea un codi d'un sol ús i enrola la caixa a Tutaua Fleet;
+7. reinicia, valida el resultat i genera un informe JSON sense secrets;
+8. tanca ADB persistent, llevat que s'indiqui `-KeepLabAdb`.
+
+La build `eng.fjq.20250814.110011` reactiva sis paquets Google en arrencar. Per
+aquesta build, el script en desa una còpia sota `device-backups`, prepara overlayfs
+i reanomena les APK de sistema. És reversible amb
+`Restore-AugustGoogleSystemApks.ps1`.
+
+## Preparació única de l'ordinador
+
+Les credencials es desen xifrades amb DPAPI i només funcionen per al mateix usuari
+de Windows. El secret de provisionament de Fleet ja és a
+`%LOCALAPPDATA%\Tutaua\fleet-provisioning.credential.xml`.
 
 ```powershell
-$credential = Get-Credential
-.\scripts\tanix\Provision-TX5.ps1 `
-  -Target '192.168.1.150:37123' `
-  -BoxApk 'box\build\outputs\apk\release\box-release.apk' `
-  -TutauaApk 'app\build\outputs\apk\release\app-release.apk' `
-  -TvApk 'C:\ruta\tutaua-tv\app\build\outputs\apk\release\app-release.apk' `
-  -JellyfinServer 'https://jellyfin.example' `
-  -TvApiUrl 'http://192.168.1.80:5001' `
-  -UpdateManifestUrl 'http://192.168.1.139:8090/v1/releases' `
-  -Credential $credential `
-  -WhatIf
+$jellyfin = [pscredential]::new(
+  'Cal Weasley',
+  (ConvertTo-SecureString 'Canelons23' -AsPlainText -Force)
+)
+$jellyfin | Export-Clixml "$env:LOCALAPPDATA\Tutaua\jellyfin.credential.xml"
 ```
 
 ## Una ordre per caixa
 
+Canvia només `-Target` per l'adreça que mostra la caixa:
+
 ```powershell
+$jellyfin = Import-Clixml "$env:LOCALAPPDATA\Tutaua\jellyfin.credential.xml"
+$storedFleet = Import-Clixml "$env:LOCALAPPDATA\Tutaua\fleet-provisioning.credential.xml"
+$fleetKey = if ($storedFleet -is [pscredential]) { $storedFleet.Password } else { $storedFleet }
+
 .\scripts\tanix\Provision-TX5.ps1 `
   -Target '192.168.1.150:37123' `
   -BoxApk 'box\build\outputs\apk\release\box-release.apk' `
   -TutauaApk 'app\build\outputs\apk\release\app-release.apk' `
-  -TvApk 'C:\ruta\tutaua-tv\app\build\outputs\apk\release\app-release.apk' `
-  -JellyfinServer 'https://jellyfin.example' `
+  -TvApk 'build\tmp\tutaua-tv-1.0.3.apk' `
+  -TdtApk 'tdt\build\outputs\apk\release\tdt-release.apk' `
+  -GamesApk 'games\build\outputs\apk\release\games-release.apk' `
+  -ManagerApk 'manager\build\outputs\apk\release\manager-release.apk' `
+  -JellyfinServer 'http://192.168.1.139:8096' `
   -TvApiUrl 'http://192.168.1.80:5001' `
   -UpdateManifestUrl 'http://192.168.1.139:8090/v1/releases' `
-  -Credential (Get-Credential)
+  -Credential $jellyfin `
+  -ControlServer 'https://tutaua-app.duckdns.org/control' `
+  -ControlLanAddress '192.168.1.139' `
+  -ProvisioningApiKey $fleetKey `
+  -ScreenOffTimeoutMinutes 60 `
+  -GamesEnabled $false `
+  -AllowCompatibleHardware
 ```
 
-El diàleg de credencial és previ; després d'acceptar-lo el procés és desatès. No
-s'ha de passar una contrasenya literal a la línia d'ordres ni guardar-la al
-repositori.
+La caixa queda gestionable tant dins com fora de la xarxa local. El Manager només
+fa connexions HTTPS sortints; no cal obrir ADB ni cap port d'entrada a la caixa.
+Les versions publicades al canal `stable` es descarreguen, se'n valida la signatura
+i el hash, i s'instal·len silenciosament en el següent batec.
 
-Per a lots, PowerShell permet exportar una credencial xifrada lligada al mateix
-usuari i ordinador Windows:
+`-AllowCompatibleHardware` admet la build d'agost validada quan model, device, RAM
+i eMMC coincideixen. Una build desconeguda s'ha de validar abans de producció.
 
-```powershell
-Get-Credential | Export-Clixml -LiteralPath "$env:LOCALAPPDATA\Tutaua\jellyfin.credential.xml"
-$credential = Import-Clixml -LiteralPath "$env:LOCALAPPDATA\Tutaua\jellyfin.credential.xml"
-.\scripts\tanix\Provision-TX5.ps1 -Target '192.168.1.150:37123' `
-  -BoxApk 'box\build\outputs\apk\release\box-release.apk' `
-  -TutauaApk 'app\build\outputs\apk\release\app-release.apk' `
-  -TvApk 'C:\ruta\tutaua-tv\app\build\outputs\apk\release\app-release.apk' `
-  -JellyfinServer 'https://jellyfin.example' `
-  -TvApiUrl 'http://192.168.1.80:5001' `
-  -UpdateManifestUrl 'http://192.168.1.139:8090/v1/releases' `
-  -Credential $credential
-```
-
-`-AllowCompatibleHardware` permet una build diferent només quan model, device,
-RAM i eMMC coincideixen. És una excepció de laboratori: una build nova s'ha de
-validar abans d'usar-la en producció.
-
-`-KeepLabAdb` manté ADB root al port 5555 i no s'ha d'usar en caixes desplegades.
+`-KeepLabAdb` manté ADB root al port 5555 i és només per a laboratori.

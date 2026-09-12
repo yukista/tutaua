@@ -23,12 +23,11 @@ public final class SyncJobService extends JobService {
             try { synchronize(); }
             catch (Exception error) { retry = true; Log.e("TUTAUA_MANAGER", "sync ERROR " + error.getClass().getSimpleName(), error); }
             jobFinished(parameters, retry);
-            Scheduler.scheduleHeartbeat(this);
+            if (!retry) Scheduler.scheduleHeartbeat(this);
         });
         return true;
     }
     @Override public boolean onStopJob(JobParameters parameters) {
-        Scheduler.scheduleHeartbeat(this);
         return true;
     }
 
@@ -53,10 +52,12 @@ public final class SyncJobService extends JobService {
         JSONArray updates = response.optJSONArray("updates");
         if (updates != null) for (int index = 0; index < updates.length(); index++) {
             JSONObject release = updates.getJSONObject(index);
-            UpdateInstaller.install(this, store, release);
+            try { UpdateInstaller.install(this, store, release); recordUpdate(release,true); }
+            catch(Exception error){recordUpdate(release,false);Log.e("TUTAUA_MANAGER","update ERROR "+release.optString("applicationId"),error);}
         }
         Log.i("TUTAUA_MANAGER", "sync SUCCESS");
     }
+    private void recordUpdate(JSONObject r,boolean ok){sendBroadcast(new Intent("com.yukista.tutaua.box.action.UPDATE_RECORDED").setPackage("com.yukista.tutaua.box").putExtra("package",r.optString("applicationId")).putExtra("versionName",r.optString("versionName")).putExtra("versionCode",r.optLong("versionCode")).putExtra("success",ok).putExtra("time",System.currentTimeMillis()),"com.yukista.tutaua.permission.MANAGE_BOX");}
 
     private boolean applyConfiguration(int version, JSONObject config) throws InterruptedException {
         Intent apply = new Intent("com.yukista.tutaua.box.action.APPLY_REMOTE_CONFIG")

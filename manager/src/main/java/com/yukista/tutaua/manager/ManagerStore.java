@@ -17,12 +17,21 @@ final class ManagerStore {
     private static final String PREFS = "manager_state_v1";
     private static final String KEY_ALIAS = "tutaua_manager_token_v1";
     private final SharedPreferences preferences;
+    private final java.util.Map<String,String> box;
 
-    ManagerStore(Context context) { preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
+    ManagerStore(Context context) { box = BoxConfigClient.read(context); preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
     boolean enrolled() { return !preferences.getString("device_id", "").isEmpty(); }
-    String server() { return preferences.getString("server", ""); }
+    String server() {
+        String configured = box.get("manager.base_url");
+        return configured == null || configured.trim().isEmpty() ? preferences.getString("server", "") : trim(configured.trim());
+    }
     String deviceId() { return preferences.getString("device_id", ""); }
-    String lanAddress() { return preferences.getString("lan_address", ""); }
+    String lanAddress() {
+        // Old Box versions have no Fleet keys. An explicit empty address disables LAN mapping.
+        String configured = box.get("manager.base_url");
+        return configured == null || configured.trim().isEmpty() ? preferences.getString("lan_address", "")
+                : box.getOrDefault("manager.lan_address", "").trim();
+    }
     int configVersion() { return preferences.getInt("config_version", 0); }
     String reportedConfig() { return preferences.getString("reported_config", "{}"); }
     int heartbeatSeconds() { return preferences.getInt("heartbeat_seconds", 0); }

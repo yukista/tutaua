@@ -6,6 +6,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BoxConfigTest {
+    @Test public void fleetPreservesTlsAndAllowsExplicitPublicOnlyRouting() {
+        assertTrue(BoxConfig.validFleetUrl("https://fleet.example/control"));
+        assertTrue(BoxConfig.validFleetUrl(""));
+        assertFalse(BoxConfig.validFleetUrl("http://192.168.1.139:8091"));
+        assertFalse(BoxConfig.validFleetUrl("https://user:pass@fleet.example"));
+        assertFalse(BoxConfig.validFleetUrl("https://fleet.example/control?token=abc"));
+        assertTrue(BoxConfig.validLanAddress(""));
+        assertTrue(BoxConfig.validLanAddress("192.168.1.139"));
+        assertFalse(BoxConfig.validLanAddress("192.168.1.999"));
+        assertFalse(BoxConfig.validLanAddress("8.8.8.8"));
+    }
+
     @Test public void requiredServiceUrlsMustBeHttpOrHttps() {
         assertTrue(BoxConfig.validUrl("https://jellyfin.example", false));
         assertTrue(BoxConfig.validUrl("http://192.168.1.20:8096", false));

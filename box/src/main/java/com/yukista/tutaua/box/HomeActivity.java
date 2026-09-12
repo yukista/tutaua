@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Gravity;
@@ -34,7 +35,9 @@ public final class HomeActivity extends Activity {
         super.onCreate(state); immersive();
         startService(new Intent(this, WatchdogService.class));
         LinearLayout page = new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(72), dp(42), dp(72), dp(34)); page.setBackgroundColor(BG);
+        page.setPadding(dp(72), dp(42), dp(72), dp(28));
+        page.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{Color.rgb(12, 17, 31), BG, Color.rgb(10, 12, 23)}));
         LinearLayout header = new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
         TextView brand = label(getString(R.string.brand_name), 27, Color.WHITE, true); brand.setLetterSpacing(.16f); header.addView(brand);
         header.addView(label(getString(R.string.brand_box), 14, Color.rgb(150, 128, 255), true));
@@ -48,25 +51,33 @@ public final class HomeActivity extends Activity {
         View library = choice("▶", getString(R.string.library_title), getString(R.string.library_subtitle), "com.yukista.tutaua", Color.rgb(150, 118, 255));
         View tv = choice("◉", getString(R.string.live_tv_title), getString(R.string.live_tv_subtitle), "tv.tutaua.app", Color.rgb(76, 190, 221));
         choices.addView(library, card()); choices.addView(tv, card());
-        if (BoxConfig.preferences(this).getBoolean(BoxConfig.GAMES_ENABLED, BoxConfig.DEFAULT_GAMES_ENABLED)) {
-            View games = choice("+", getString(R.string.games_title), getString(R.string.games_subtitle), "com.yukista.tutaua.games", Color.rgb(241, 164, 76));
         View tdt = choice("▣", getString(R.string.tdt_title), getString(R.string.tdt_subtitle), "com.yukista.tutaua.tdt", Color.rgb(244, 197, 66));
         choices.addView(tdt, card());
+        if (BoxConfig.preferences(this).getBoolean(BoxConfig.GAMES_ENABLED, BoxConfig.DEFAULT_GAMES_ENABLED)) {
+            View games = choice("+", getString(R.string.games_title), getString(R.string.games_subtitle), "com.yukista.tutaua.games", Color.rgb(241, 164, 76));
             choices.addView(games, card());
         }
-        TextView help = label(getString(R.string.admin_hint), 13, Color.rgb(112, 122, 146), false); help.setGravity(Gravity.CENTER); page.addView(help, new LinearLayout.LayoutParams(-1, dp(34)));
+        View updates = choice("↻", "Actualitzacions", "Versions instal·lades i historial recent", "", Color.rgb(111, 218, 169));
+        updates.setOnClickListener(v -> startActivity(new Intent(this, UpdatesActivity.class)));
+        choices.addView(updates, card());
+        LinearLayout footer = new LinearLayout(this); footer.setGravity(Gravity.CENTER_VERTICAL);
+        TextView boxId = label(getString(R.string.box_identifier, deviceIdentifier()), 12, Color.rgb(126, 138, 166), true);
+        boxId.setLetterSpacing(.05f); boxId.setBackground(fill(Color.rgb(17, 23, 38), 18)); boxId.setPadding(dp(14), dp(7), dp(14), dp(7));
+        footer.addView(boxId); footer.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        TextView help = label(getString(R.string.admin_hint), 13, Color.rgb(112, 122, 146), false); footer.addView(help);
+        page.addView(footer, new LinearLayout.LayoutParams(-1, dp(38)));
         setContentView(page); library.requestFocus();
     }
 
     private View choice(String icon, String title, String subtitle, String packageName, int accent) {
         LinearLayout card = new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(dp(30), dp(18), dp(30), dp(16)); card.setFocusable(true); card.setClickable(true);
+        card.setPadding(dp(30), dp(24), dp(30), dp(22)); card.setFocusable(true); card.setClickable(true);
         card.setBackground(panel(SURFACE, Color.rgb(52, 62, 84), 2)); card.addView(label(icon, 34, accent, true));
         TextView heading = label(title, 22, Color.WHITE, true); LinearLayout.LayoutParams hp = wrap(); hp.topMargin = dp(11); card.addView(heading, hp);
         TextView detail = label(subtitle, 13, MUTED, false); detail.setMaxLines(2); detail.setLineSpacing(0, 1.06f); LinearLayout.LayoutParams dpv = new LinearLayout.LayoutParams(-1, -2); dpv.topMargin = dp(6); card.addView(detail, dpv);
         card.setOnClickListener(v -> launch(packageName));
         card.setOnFocusChangeListener((v, focused) -> {
-            v.animate().scaleX(focused ? 1.012f : 1f).scaleY(focused ? 1.012f : 1f)
+            v.animate().scaleX(focused ? 1.025f : 1f).scaleY(focused ? 1.025f : 1f)
                     .translationZ(focused ? dp(12) : 0).setDuration(140).start();
             v.setBackground(panel(
                     focused ? Color.rgb(33, 40, 60) : SURFACE,
@@ -141,6 +152,12 @@ public final class HomeActivity extends Activity {
         dialog.show();
     }
     private GradientDrawable panel(int fill, int stroke, int width) { GradientDrawable d = fill(fill, 18); d.setStroke(dp(width), stroke); return d; }
+    private String deviceIdentifier() {
+        String value = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        if (value == null || value.trim().isEmpty()) value = android.os.Build.DEVICE;
+        value = value.toUpperCase(java.util.Locale.ROOT);
+        return value.length() > 8 ? value.substring(value.length() - 8) : value;
+    }
     private GradientDrawable fill(int color, int radius) { GradientDrawable d = new GradientDrawable(); d.setColor(color); d.setCornerRadius(dp(radius)); return d; }
     private void immersive() { getWindow().getDecorView().setSystemUiVisibility(5894); }
     private TextView label(String text, int size, int color, boolean bold) { TextView view=new TextView(this); view.setText(text); view.setTextSize(size); view.setTextColor(color); if(bold)view.setTypeface(Typeface.DEFAULT,Typeface.BOLD); return view; }

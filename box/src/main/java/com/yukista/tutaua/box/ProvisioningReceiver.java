@@ -19,6 +19,8 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
         try {
             if (requestId == null || !requestId.matches("[A-Za-z0-9-]{8,64}"))
                 throw new IllegalArgumentException("invalid_request");
+            String fleet = decode(intent, "fleet_b64");
+            String fleetLan = decode(intent, "fleet_lan_b64");
             String jellyfin = decode(intent, "jellyfin_b64");
             String tvApi = decode(intent, "tv_api_b64");
             String tvStream = decode(intent, "tv_stream_b64");
@@ -34,7 +36,7 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
             int gamesKeyCode = gamesKeyValue.isEmpty() ? BoxConfig.DEFAULT_GAMES_KEYCODE : Integer.parseInt(gamesKeyValue);
             boolean gamesEnabled = gamesEnabledValue.isEmpty() || Boolean.parseBoolean(gamesEnabledValue);
             int timeoutMinutes = timeoutValue.isEmpty() ? 10 : Integer.parseInt(timeoutValue);
-            if (!BoxConfig.validUrl(jellyfin, false) || !BoxConfig.validUrl(tvApi, false)
+            if (!BoxConfig.validFleetUrl(fleet) || !BoxConfig.validLanAddress(fleetLan) || !BoxConfig.validUrl(jellyfin, false) || !BoxConfig.validUrl(tvApi, false)
                     || !BoxConfig.validUrl(tvStream, true) || !BoxConfig.validUrl(updates, true)
                     || !BoxConfig.validChannel(channel)
                     || !BoxConfig.validKeyCode(libraryKeyCode) || !BoxConfig.validKeyCode(liveTvKeyCode) || !BoxConfig.validKeyCode(gamesKeyCode)
@@ -51,11 +53,13 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
                     .putString(BoxConfig.LIBRARY_KEYCODE, String.valueOf(libraryKeyCode))
                     .putString(BoxConfig.LIVE_TV_KEYCODE, String.valueOf(liveTvKeyCode))
                     .putString(BoxConfig.GAMES_KEYCODE, String.valueOf(gamesKeyCode));
+            if (intent.hasExtra("fleet_b64")) editor.putString(BoxConfig.FLEET_URL, BoxConfig.trimUrl(fleet));
+            if (intent.hasExtra("fleet_lan_b64")) editor.putString(BoxConfig.FLEET_LAN, fleetLan.trim());
             editor.putBoolean(BoxConfig.GAMES_ENABLED, gamesEnabled);
             if (!editor.commit()) throw new IllegalStateException("write_failed");
             if (!DeviceSettings.applyScreenTimeoutMinutes(timeoutMinutes))
                 throw new IllegalStateException("screen_timeout_failed");
-            context.getContentResolver().notifyChange(ConfigProvider.URI, null);
+            BoxConfig.notifyConfiguration(context);
             Log.i(TAG, requestId + " SUCCESS");
         } catch (Exception error) {
             Log.e(TAG, safe(requestId) + " ERROR " + error.getClass().getSimpleName());

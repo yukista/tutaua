@@ -4,11 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-public final class BootReceiver extends BroadcastReceiver {
+public final class ConfigurationReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
-        String action = intent == null ? null : intent.getAction();
-        if (Intent.ACTION_BOOT_COMPLETED.equals(action) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
+        if ("com.yukista.tutaua.manager.action.CONFIG_CHANGED".equals(intent.getAction()))
             Scheduler.schedule(context);
-        }
     }
 }

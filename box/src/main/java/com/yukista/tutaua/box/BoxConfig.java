@@ -8,6 +8,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 final class BoxConfig {
+    static final String FLEET_URL = "manager.base_url";
+    static final String FLEET_LAN = "manager.lan_address";
+    static final String LOCAL_JELLYFIN = "http://192.168.1.139:8096";
+    static final String LOCAL_TV = "http://192.168.1.139:8092";
+    static final String REMOTE_JELLYFIN = "https://tutaua-demo.duckdns.org";
+    static final String REMOTE_TV = "https://tutaua-app.duckdns.org/tv";
+    static final String DEFAULT_FLEET = "https://tutaua-app.duckdns.org/control";
     static final String JELLYFIN_URL = "jellyfin.base_url";
     static final String TV_API_URL = "tv.api_base_url";
     static final String TV_STREAM_URL = "tv.stream_url";
@@ -36,6 +43,8 @@ final class BoxConfig {
     static Map<String, String> values(Context context) {
         SharedPreferences preferences = preferences(context);
         Map<String, String> values = new LinkedHashMap<>();
+        values.put(FLEET_URL, preferences.getString(FLEET_URL, ""));
+        values.put(FLEET_LAN, preferences.getString(FLEET_LAN, ""));
         values.put(JELLYFIN_URL, preferences.getString(JELLYFIN_URL, ""));
         values.put(TV_API_URL, preferences.getString(TV_API_URL, ""));
         values.put(TV_STREAM_URL, preferences.getString(TV_STREAM_URL, ""));
@@ -59,6 +68,32 @@ final class BoxConfig {
             return uri.getHost() != null
                     && ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()));
         } catch (IllegalArgumentException ignored) { return false; }
+    }
+
+    static boolean validFleetUrl(String value) {
+        if (value.trim().isEmpty()) return true; // Preserve the enrolled server.
+        try {
+            URI uri = URI.create(value.trim());
+            return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
+                    && uri.getUserInfo() == null && uri.getQuery() == null && uri.getFragment() == null;
+        } catch (IllegalArgumentException error) { return false; }
+    }
+
+    static boolean validLanAddress(String value) {
+        if (value.trim().isEmpty()) return true;
+        String[] parts = value.trim().split("\\.");
+        if (parts.length != 4) return false;
+        try {
+            int[] octets = new int[4];
+            for (int i=0;i<4;i++) { octets[i]=Integer.parseInt(parts[i]); if(octets[i]<0||octets[i]>255)return false; }
+            return octets[0]==10 || octets[0]==192&&octets[1]==168 || octets[0]==172&&octets[1]>=16&&octets[1]<=31;
+        } catch (NumberFormatException error) { return false; }
+    }
+
+    static void notifyConfiguration(android.content.Context context) {
+        context.getContentResolver().notifyChange(ConfigProvider.URI, null);
+        context.sendBroadcast(new android.content.Intent("com.yukista.tutaua.manager.action.CONFIG_CHANGED")
+                .setPackage("com.yukista.tutaua.manager"), "com.yukista.tutaua.permission.MANAGE_BOX");
     }
 
     static boolean validChannel(String value) {
