@@ -52,7 +52,8 @@ public final class MainActivity extends Activity {
     private PlayerView playerView;
     private LinearLayout info;
     private TextView channelName, programme, hint;
-    private LinearLayout guidePanel, guideRows;
+    private LinearLayout guidePanel, guideRows, epgPanel, epgRows;
+    private TextView epgTitle;
     private int selected = 0, source = 0;
     private String epgUrl = "", playbackStatus = "";
     private boolean guideVisible;
@@ -80,13 +81,17 @@ public final class MainActivity extends Activity {
     private void buildUi() {
         root = new FrameLayout(this);
         playerView = new PlayerView(this); playerView.setUseController(false); root.addView(playerView, fullScreen());
-        guidePanel = new LinearLayout(this); guidePanel.setOrientation(LinearLayout.VERTICAL); guidePanel.setPadding(dp(42), dp(34), dp(34), dp(24));
+        guidePanel = new LinearLayout(this); guidePanel.setOrientation(LinearLayout.VERTICAL); guidePanel.setPadding(dp(28), dp(26), dp(20), dp(18));
         guidePanel.setBackgroundColor(0xF10B1520); guidePanel.setVisibility(View.GONE);
-        TextView guideTitle = text(24, Color.WHITE); guideTitle.setText("GUIA TUTAUA TDT"); guidePanel.addView(guideTitle);
-        TextView guideHelp = text(15, 0xFFC9D4DF); guideHelp.setText("↑ ↓  canvia de canal i previsualitza     ·     OK / Enrere  torna a pantalla completa"); guideHelp.setPadding(0, dp(5), 0, dp(20)); guidePanel.addView(guideHelp);
+        TextView guideTitle = text(20, Color.WHITE); guideTitle.setText("GUIA  ·  CANALS"); guidePanel.addView(guideTitle);
+        TextView guideHelp = text(13, 0xFFC9D4DF); guideHelp.setText("↑ ↓ canvia i previsualitza  ·  OK pantalla completa"); guideHelp.setPadding(0, dp(3), 0, dp(12)); guidePanel.addView(guideHelp);
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); guideRows = new LinearLayout(this); guideRows.setOrientation(LinearLayout.VERTICAL); scroll.addView(guideRows, new ScrollView.LayoutParams(-1, -2));
         guidePanel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         root.addView(guidePanel, new FrameLayout.LayoutParams(guidePanelWidth(), -1, Gravity.LEFT));
+        epgPanel = new LinearLayout(this); epgPanel.setOrientation(LinearLayout.VERTICAL); epgPanel.setPadding(dp(24), dp(18), dp(24), dp(16)); epgPanel.setBackgroundColor(0xF1121E2A); epgPanel.setVisibility(View.GONE);
+        epgTitle = text(18, Color.WHITE); epgPanel.addView(epgTitle);
+        epgRows = new LinearLayout(this); epgRows.setOrientation(LinearLayout.VERTICAL); epgRows.setPadding(0, dp(8), 0, 0); epgPanel.addView(epgRows, new LinearLayout.LayoutParams(-1, 0, 1));
+        root.addView(epgPanel, new FrameLayout.LayoutParams(previewWidth(), epgPanelHeight(), Gravity.RIGHT | Gravity.BOTTOM));
         info = new LinearLayout(this); info.setOrientation(LinearLayout.VERTICAL); info.setPadding(dp(36), dp(24), dp(36), dp(24)); info.setBackgroundColor(0xC9000000);
         channelName = text(28, Color.WHITE); programme = text(19, 0xFFE5E5E5); hint = text(14, 0xFFF4C542);
         info.addView(channelName); info.addView(programme); info.addView(hint); root.addView(info, new FrameLayout.LayoutParams(-1, -2, Gravity.TOP)); setContentView(root);
@@ -94,8 +99,11 @@ public final class MainActivity extends Activity {
     private FrameLayout.LayoutParams fullScreen() { return new FrameLayout.LayoutParams(-1, -1); }
     private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
     private int screenWidth() { return getResources().getDisplayMetrics().widthPixels; }
-    private int guidePanelWidth() { return (int) (screenWidth() * .60f); }
-    private int previewWidth() { return (int) (screenWidth() * .36f); }
+    private int screenHeight() { return getResources().getDisplayMetrics().heightPixels; }
+    private int guidePanelWidth() { return (int) (screenWidth() * .48f); }
+    private int previewWidth() { return (int) (screenWidth() * .47f); }
+    private int previewHeight() { return previewWidth() * 9 / 16; }
+    private int epgPanelHeight() { return screenHeight() - previewHeight() - dp(34); }
     private TextView text(int size, int color) { TextView view = new TextView(this); view.setTextSize(size); view.setTextColor(color); view.setMaxLines(3); return view; }
 
     private void loadRemoteConfiguration() {
@@ -133,21 +141,23 @@ public final class MainActivity extends Activity {
     private void showHeader() { if (guideVisible) return; info.setVisibility(View.VISIBLE); info.bringToFront(); main.removeCallbacks(hideHeader); }
     private void scheduleHeaderHide() { main.removeCallbacks(hideHeader); if (!guideVisible) main.postDelayed(hideHeader, HEADER_TIMEOUT_MS); }
     private void showEmpty() { showHeader(); channelName.setText("Tutaua TDT"); programme.setText("Esperant la configuració remota de canals"); hint.setText("El gestor Tutaua ha de publicar el catàleg TDT."); }
-    private void showGuide() { if (channels.isEmpty()) return; guideVisible=true; main.removeCallbacks(hideHeader); info.setVisibility(View.GONE); guidePanel.setVisibility(View.VISIBLE); int width=previewWidth(); FrameLayout.LayoutParams preview = new FrameLayout.LayoutParams(width, width * 9 / 16, Gravity.TOP | Gravity.RIGHT); preview.setMargins(0, dp(20), dp(20), 0); playerView.setLayoutParams(preview); guidePanel.bringToFront(); playerView.bringToFront(); renderGuide(); }
+    private void showGuide() { if (channels.isEmpty()) return; guideVisible=true; main.removeCallbacks(hideHeader); info.setVisibility(View.GONE); guidePanel.setVisibility(View.VISIBLE); epgPanel.setVisibility(View.VISIBLE); int width=previewWidth(); FrameLayout.LayoutParams preview = new FrameLayout.LayoutParams(width, previewHeight(), Gravity.TOP | Gravity.RIGHT); preview.setMargins(0, dp(16), dp(16), 0); playerView.setLayoutParams(preview); guidePanel.bringToFront(); epgPanel.bringToFront(); playerView.bringToFront(); renderGuide(); }
     private void renderGuide() {
         if (!guideVisible || channels.isEmpty()) return;
         guideRows.removeAllViews();
         for (int i=0; i<channels.size(); i++) {
             Channel channel = channels.get(i); Programme now=currentProgramme(channel), next=nextProgramme(channel); boolean active=i == selected;
-            LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.VERTICAL); row.setPadding(dp(20), dp(13), dp(20), dp(13));
+            LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.VERTICAL); row.setPadding(dp(14), dp(7), dp(14), dp(7));
             row.setBackgroundColor(active ? 0xFFF4C542 : 0x1AFFFFFF);
-            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, -2); rowParams.setMargins(0, 0, 0, dp(8)); guideRows.addView(row, rowParams);
-            TextView name = text(20, active ? 0xFF101820 : Color.WHITE); name.setText((active ? "▶  " : "    ") + (i + 1) + "   " + channel.name); row.addView(name);
-            TextView nowLabel = text(15, active ? 0xFF30363C : 0xFFD7E1EA); nowLabel.setText(now == null ? "Sense informació de programació" : "ARA   " + now.title); nowLabel.setPadding(dp(48), dp(4), 0, 0); row.addView(nowLabel);
-            if (next != null) { TextView nextLabel = text(14, active ? 0xFF505860 : 0xFF9EAFBE); nextLabel.setText("DESPRÉS   " + next.title); nextLabel.setPadding(dp(48), dp(2), 0, 0); row.addView(nextLabel); }
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, -2); rowParams.setMargins(0, 0, 0, dp(4)); guideRows.addView(row, rowParams);
+            TextView name = text(18, active ? 0xFF101820 : Color.WHITE); name.setText((active ? "▶  " : "    ") + (i + 1) + "   " + channel.name); row.addView(name);
+            TextView nowLabel = text(13, active ? 0xFF30363C : 0xFFD7E1EA); nowLabel.setSingleLine(true); nowLabel.setText(now == null ? "Sense programació" : "Ara · " + now.title); nowLabel.setPadding(dp(42), 0, 0, 0); row.addView(nowLabel);
         }
+        Channel active = channels.get(selected); Programme now=currentProgramme(active); epgTitle.setText(active.name + "  ·  Programació"); epgRows.removeAllViews();
+        int shown=0; for (Programme item : guide.getOrDefault(active.epgId, Collections.emptyList())) { if (item.end <= System.currentTimeMillis() || shown++ >= 6) continue; TextView event=text(15, item.start <= System.currentTimeMillis() ? 0xFFF4C542 : 0xFFD7E1EA); event.setMaxLines(1); event.setText(android.text.format.DateFormat.format("HH:mm", item.start) + "  " + item.title); event.setPadding(0, dp(5), 0, dp(5)); epgRows.addView(event); }
+        if (shown == 0) { TextView empty=text(14, 0xFF9EAFBE); empty.setText(now == null ? "Sense informació de programació" : now.title); epgRows.addView(empty); }
     }
-    private void hideGuide() { guideVisible=false; guidePanel.setVisibility(View.GONE); playerView.setLayoutParams(fullScreen()); scheduleHeaderHide(); }
+    private void hideGuide() { guideVisible=false; guidePanel.setVisibility(View.GONE); epgPanel.setVisibility(View.GONE); playerView.setLayoutParams(fullScreen()); scheduleHeaderHide(); }
     private void selectOffset(int offset) { if(channels.isEmpty()) return; selected=(selected+offset+channels.size())%channels.size(); source=0; playSelected(); if(guideVisible) renderGuide(); }
     @Override public boolean dispatchKeyEvent(KeyEvent event) { if(event.getAction()!=KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event); int key=event.getKeyCode(); if(key==KeyEvent.KEYCODE_DPAD_UP){ selectOffset(-1); return true; } if(key==KeyEvent.KEYCODE_DPAD_DOWN){ selectOffset(1); return true; } if(key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER){ if(guideVisible) hideGuide(); else showGuide(); return true; } if(key==KeyEvent.KEYCODE_BACK&&guideVisible){ hideGuide(); return true; } showHeader(); scheduleHeaderHide(); return super.dispatchKeyEvent(event); }
     @Override protected void onStop() { super.onStop(); if(player != null) player.pause(); }
