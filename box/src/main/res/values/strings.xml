@@ -8,8 +8,8 @@
     <string name="home_intro">All your entertainment in one place.</string>
     <string name="library_title">Shows and movies</string>
     <string name="library_subtitle">Your library, favourites and unwatched content</string>
-    <string name="live_tv_title">Live TV</string>
-    <string name="live_tv_subtitle">Live channels with fast, automatic switching</string>
+    <string name="live_tv_title">Football</string>
+    <string name="live_tv_subtitle">Live matches with fast, automatic switching</string>
     <string name="tdt_title">TDT</string>
     <string name="tdt_subtitle">Your remotely configured television channels</string>
     <string name="games_title">Games</string>
@@ -25,7 +25,7 @@
     <string name="jellyfin_server">Jellyfin server</string>
     <string name="jellyfin_hint">http://server:8096</string>
     <string name="tv_api">TV API</string>
-    <string name="tv_api_hint">http://server:5001</string>
+    <string name="tv_api_hint">http://server:8092</string>
     <string name="tv_stream">TV stream (optional)</string>
     <string name="tv_stream_hint">Generated from the API when left empty</string>
     <string name="device_updates">DEVICE AND UPDATES</string>
@@ -37,7 +37,7 @@
     <string name="screen_timeout">Screen timeout (minutes)</string>
     <string name="screen_timeout_hint">1–120 minutes</string>
     <string name="library_button">Button for shows and movies</string>
-    <string name="live_tv_button">Button for live TV</string>
+    <string name="live_tv_button">Button for football</string>
     <string name="games_button">Button for games</string>
     <string name="games_enabled">Enable games in Tutaua Box</string>
     <string name="press_remote_button">Press the button on the remote…</string>
@@ -47,7 +47,7 @@
     <string name="remote_capture_cancelled">Assignment cancelled</string>
     <string name="duplicate_remote_button">Choose a different button for each destination</string>
     <string name="remote_service_name">Tutaua Box remote buttons</string>
-    <string name="remote_service_description">Routes only the assigned remote-control buttons between Tutaua, live TV and games.</string>
+    <string name="remote_service_description">Routes only the assigned remote-control buttons between Tutaua, football and games.</string>
     <string name="android_settings">Android settings</string>
     <string name="save_changes">Save changes</string>
     <string name="invalid_urls">Check the URLs</string>

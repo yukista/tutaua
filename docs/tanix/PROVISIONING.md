@@ -56,8 +56,7 @@ $fleetKey = if ($storedFleet -is [pscredential]) { $storedFleet.Password } else 
   -GamesApk 'games\build\outputs\apk\release\games-release.apk' `
   -ManagerApk 'manager\build\outputs\apk\release\manager-release.apk' `
   -JellyfinServer 'http://192.168.1.139:8096' `
-  -TvApiUrl 'http://192.168.1.80:5001' `
-  -UpdateManifestUrl 'http://192.168.1.139:8090/v1/releases' `
+  -TvApiUrl 'http://192.168.1.139:8092' `
   -Credential $jellyfin `
   -ControlServer 'https://tutaua-app.duckdns.org/control' `
   -ControlLanAddress '192.168.1.139' `
@@ -71,6 +70,9 @@ La caixa queda gestionable tant dins com fora de la xarxa local. El Manager nom�
 fa connexions HTTPS sortints; no cal obrir ADB ni cap port d'entrada a la caixa.
 Les versions publicades al canal `stable` es descarreguen, se'n valida la signatura
 i el hash, i s'instal·len silenciosament en el següent batec.
+
+`-UpdateManifestUrl` és opcional i correspon al catàleg antic; no s'ha d'indicar
+en una caixa nova. Les actualitzacions de Manager provenen de Tutaua Fleet.
 
 `-AllowCompatibleHardware` admet la build d'agost validada quan model, device, RAM
 i eMMC coincideixen. Una build desconeguda s'ha de validar abans de producció.

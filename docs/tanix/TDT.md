@@ -43,6 +43,15 @@ fa servir com a ordre explícit si cal reordenar-lo des d'una eina automàtica.
 
 Una publicació nova arriba amb el batec normal del Manager. La Box propaga la
 configuració a Tutaua TDT i l'app recarrega canals i EPG sense reinstal·lar-se.
+
+## Diagnòstic d'una Box sense canals
+
+Si Tutaua TDT mostra "Esperant la configuració remota de canals", primer
+comproveu que Fleet té una selecció global publicada a `/admin/tdt`. Si la
+selecció existeix però el valor `tdt.catalog` de la Box és buit, republicar la
+mateixa selecció (això incrementa la seva versió) i executar una sincronització
+del Manager. La Box ha de registrar `TUTAUA_BOX_REMOTE: configuration SUCCESS`
+i el seu `tdt.catalog` ha de contenir canals abans de tornar a obrir Tutaua TDT.
 Cada canal pot tenir diverses fonts dins de `streams`; si falla la primera, el
 reproductor prova la següent.
 

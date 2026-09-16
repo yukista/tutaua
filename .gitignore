@@ -33,3 +33,4 @@ __pycache__/
 *.pyc
 *.tar.gz
 *.apk
+fleet-artifacts/

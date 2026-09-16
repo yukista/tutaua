@@ -16,6 +16,15 @@ desar queda sempre visible.
 | Fleet | `https://tutaua-app.duckdns.org/control` | Mateix domini HTTPS |
 | IP local Fleet | `192.168.1.139` | Buida: resolució pública normal |
 
+La URL local de TV canònica és `http://192.168.1.139:8092`. L'antiga API del
+`.80` no s'utilitza en provisionament, suggeriments ni configuració Fleet.
+
+El 2026-09-12 s'ha corregit la configuració desitjada de `PILOT-TX5-001` a
+Fleet: versió 14, amb el perfil remot actiu (`https://tutaua-demo.duckdns.org`
+i `https://tutaua-app.duckdns.org/tv`). La plantilla local de Fleet queda a
+`services/tutaua-fleet/deployment/pilot-config.json` i usa el Hub canònic del
+`.139`, mai l'API antiga del `.80`.
+
 La ruta pública `/tv` es publica a Caddy cap al Stream Hub local i elimina el
 prefix abans de reenviar les peticions. Les adreces remotes continuen requerint
 una comprovació des d'una xarxa exterior.

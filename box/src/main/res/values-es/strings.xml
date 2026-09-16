@@ -7,8 +7,8 @@
     <string name="home_intro">Todo tu entretenimiento en un solo lugar.</string>
     <string name="library_title">Series y películas</string>
     <string name="library_subtitle">Tu biblioteca, favoritos y contenido pendiente</string>
-    <string name="live_tv_title">Televisión en directo</string>
-    <string name="live_tv_subtitle">Canales en directo con cambio rápido y automático</string>
+    <string name="live_tv_title">Fútbol</string>
+    <string name="live_tv_subtitle">Partidos en directo con cambio rápido y automático</string>
     <string name="tdt_title">TDT</string>
     <string name="tdt_subtitle">Tus canales de televisión configurados remotamente</string>
     <string name="games_title">Juegos</string>
@@ -24,7 +24,7 @@
     <string name="jellyfin_server">Servidor Jellyfin</string>
     <string name="jellyfin_hint">http://servidor:8096</string>
     <string name="tv_api">API de televisión</string>
-    <string name="tv_api_hint">http://servidor:5001</string>
+    <string name="tv_api_hint">http://servidor:8092</string>
     <string name="tv_stream">Stream TV (opcional)</string>
     <string name="tv_stream_hint">Se genera desde la API si queda vacío</string>
     <string name="device_updates">DISPOSITIVO Y ACTUALIZACIONES</string>
@@ -36,7 +36,7 @@
     <string name="screen_timeout">Reposo de pantalla (minutos)</string>
     <string name="screen_timeout_hint">1–120 minutos</string>
     <string name="library_button">Botón para series y películas</string>
-    <string name="live_tv_button">Botón para televisión en directo</string>
+    <string name="live_tv_button">Botón para fútbol</string>
     <string name="games_button">Botón para juegos</string>
     <string name="games_enabled">Activar los juegos en Tutaua Box</string>
     <string name="press_remote_button">Pulsa el botón del mando…</string>
@@ -46,7 +46,7 @@
     <string name="remote_capture_cancelled">Asignación cancelada</string>
     <string name="duplicate_remote_button">Elige un botón diferente para cada destino</string>
     <string name="remote_service_name">Botones del mando de Tutaua Box</string>
-    <string name="remote_service_description">Dirige únicamente los botones asignados entre Tutaua, la televisión en directo y los juegos.</string>
+    <string name="remote_service_description">Dirige únicamente los botones asignados entre Tutaua, el fútbol y los juegos.</string>
     <string name="android_settings">Configuración de Android</string>
     <string name="save_changes">Guardar cambios</string>
     <string name="invalid_urls">Revisa las URL</string>

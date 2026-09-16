@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ public final class HomeActivity extends Activity {
         super.onCreate(state); immersive();
         startService(new Intent(this, WatchdogService.class));
         LinearLayout page = new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL);
+        page.setClipChildren(false); page.setClipToPadding(false);
         page.setPadding(dp(72), dp(42), dp(72), dp(28));
         page.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.rgb(12, 17, 31), BG, Color.rgb(10, 12, 23)}));
@@ -47,32 +49,41 @@ public final class HomeActivity extends Activity {
         page.addView(header, new LinearLayout.LayoutParams(-1, dp(54)));
         TextView title = label(getString(R.string.home_title), 38, Color.WHITE, true); LinearLayout.LayoutParams tp = wrap(); tp.topMargin = dp(38); page.addView(title, tp);
         TextView intro = label(getString(R.string.home_intro), 17, MUTED, false); LinearLayout.LayoutParams ip = wrap(); ip.topMargin = dp(8); page.addView(intro, ip);
-        LinearLayout choices = new LinearLayout(this); choices.setGravity(Gravity.CENTER); choices.setClipChildren(false); choices.setClipToPadding(false); LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-1, 0, 1); cp.topMargin = dp(34); cp.bottomMargin = dp(28); page.addView(choices, cp);
-        View library = choice("▶", getString(R.string.library_title), getString(R.string.library_subtitle), "com.yukista.tutaua", Color.rgb(150, 118, 255));
-        View tv = choice("◉", getString(R.string.live_tv_title), getString(R.string.live_tv_subtitle), "tv.tutaua.app", Color.rgb(76, 190, 221));
+        LinearLayout choices = new LinearLayout(this); choices.setGravity(Gravity.CENTER); choices.setClipChildren(false); choices.setClipToPadding(false); choices.setPadding(0, dp(16), 0, dp(16)); LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-1, 0, 1); cp.topMargin = dp(18); cp.bottomMargin = dp(12); page.addView(choices, cp);
+        View library = choice(R.drawable.ic_library, getString(R.string.library_title), getString(R.string.library_subtitle), "com.yukista.tutaua", Color.rgb(150, 118, 255));
+        View tv = choice(R.drawable.ic_football, getString(R.string.live_tv_title), getString(R.string.live_tv_subtitle), "tv.tutaua.app", Color.rgb(76, 190, 221));
         choices.addView(library, card()); choices.addView(tv, card());
-        View tdt = choice("▣", getString(R.string.tdt_title), getString(R.string.tdt_subtitle), "com.yukista.tutaua.tdt", Color.rgb(244, 197, 66));
+        View tdt = choice(R.drawable.ic_tdt, getString(R.string.tdt_title), getString(R.string.tdt_subtitle), "com.yukista.tutaua.tdt", Color.rgb(244, 197, 66));
         choices.addView(tdt, card());
         if (BoxConfig.preferences(this).getBoolean(BoxConfig.GAMES_ENABLED, BoxConfig.DEFAULT_GAMES_ENABLED)) {
-            View games = choice("+", getString(R.string.games_title), getString(R.string.games_subtitle), "com.yukista.tutaua.games", Color.rgb(241, 164, 76));
+            View games = choice(R.drawable.ic_games, getString(R.string.games_title), getString(R.string.games_subtitle), "com.yukista.tutaua.games", Color.rgb(241, 164, 76));
             choices.addView(games, card());
         }
-        View updates = choice("↻", "Actualitzacions", "Versions instal·lades i historial recent", "", Color.rgb(111, 218, 169));
-        updates.setOnClickListener(v -> startActivity(new Intent(this, UpdatesActivity.class)));
-        choices.addView(updates, card());
         LinearLayout footer = new LinearLayout(this); footer.setGravity(Gravity.CENTER_VERTICAL);
         TextView boxId = label(getString(R.string.box_identifier, deviceIdentifier()), 12, Color.rgb(126, 138, 166), true);
         boxId.setLetterSpacing(.05f); boxId.setBackground(fill(Color.rgb(17, 23, 38), 18)); boxId.setPadding(dp(14), dp(7), dp(14), dp(7));
-        footer.addView(boxId); footer.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        footer.addView(boxId);
+        LinearLayout updates = new LinearLayout(this); updates.setGravity(Gravity.CENTER_VERTICAL);
+        updates.setFocusable(true); updates.setClickable(true); updates.setPadding(dp(14), dp(7), dp(16), dp(7));
+        updates.setBackground(fill(Color.rgb(17, 23, 38), 18));
+        ImageView updatesIcon = new ImageView(this); updatesIcon.setImageResource(R.drawable.ic_updates); updatesIcon.setColorFilter(Color.rgb(126, 138, 166));
+        updates.addView(updatesIcon, new LinearLayout.LayoutParams(dp(16), dp(16)));
+        TextView updatesLabel = label("Actualitzacions", 13, Color.rgb(126, 138, 166), false); LinearLayout.LayoutParams ulp = wrap(); ulp.leftMargin = dp(8); updates.addView(updatesLabel, ulp);
+        updates.setOnClickListener(v -> startActivity(new Intent(this, UpdatesActivity.class)));
+        updates.setOnFocusChangeListener((v, focused) -> v.setBackground(focused ? panel(Color.rgb(33, 40, 60), Color.rgb(150, 128, 255), 2) : fill(Color.rgb(17, 23, 38), 18)));
+        LinearLayout.LayoutParams up = wrap(); up.leftMargin = dp(14); footer.addView(updates, up);
+        footer.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         TextView help = label(getString(R.string.admin_hint), 13, Color.rgb(112, 122, 146), false); footer.addView(help);
         page.addView(footer, new LinearLayout.LayoutParams(-1, dp(38)));
         setContentView(page); library.requestFocus();
     }
 
-    private View choice(String icon, String title, String subtitle, String packageName, int accent) {
+    private View choice(int iconRes, String title, String subtitle, String packageName, int accent) {
         LinearLayout card = new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER_VERTICAL);
         card.setPadding(dp(30), dp(24), dp(30), dp(22)); card.setFocusable(true); card.setClickable(true);
-        card.setBackground(panel(SURFACE, Color.rgb(52, 62, 84), 2)); card.addView(label(icon, 34, accent, true));
+        card.setBackground(panel(SURFACE, Color.rgb(52, 62, 84), 2));
+        ImageView icon = new ImageView(this); icon.setImageResource(iconRes); icon.setColorFilter(accent);
+        card.addView(icon, new LinearLayout.LayoutParams(dp(38), dp(38)));
         TextView heading = label(title, 22, Color.WHITE, true); LinearLayout.LayoutParams hp = wrap(); hp.topMargin = dp(11); card.addView(heading, hp);
         TextView detail = label(subtitle, 13, MUTED, false); detail.setMaxLines(2); detail.setLineSpacing(0, 1.06f); LinearLayout.LayoutParams dpv = new LinearLayout.LayoutParams(-1, -2); dpv.topMargin = dp(6); card.addView(detail, dpv);
         card.setOnClickListener(v -> launch(packageName));
