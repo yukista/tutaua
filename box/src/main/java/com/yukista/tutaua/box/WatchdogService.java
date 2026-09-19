@@ -24,6 +24,7 @@ public final class WatchdogService extends Service {
             "com.yukista.tutaua",
             "tv.tutaua.app",
             "com.yukista.tutaua.games",
+            "com.yukista.tutaua.tdt",
             "com.yukista.tutaua.manager",
             "com.android.systemui",
             "com.android.settings",
