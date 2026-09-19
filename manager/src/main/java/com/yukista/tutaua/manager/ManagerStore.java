@@ -50,12 +50,17 @@ final class ManagerStore {
     private static final long UPDATE_COOLDOWN_MILLIS = 6 * 3600 * 1000L;
 
     boolean updateOnCooldown(String packageName, long versionCode, long now) {
-        long failedAt = updateFailures().optLong(packageName + ":" + versionCode, 0);
+        Object raw = updateFailures().opt(packageName + ":" + versionCode);
+        long failedAt = raw instanceof Number ? ((Number) raw).longValue()
+                : raw instanceof JSONObject ? ((JSONObject) raw).optLong("t") : 0;
         return failedAt > 0 && now - failedAt < UPDATE_COOLDOWN_MILLIS;
     }
-    void updateFailed(String packageName, long versionCode, long now) {
+    void updateFailed(String packageName, long versionCode, String message, long now) {
         JSONObject failures = updateFailures();
-        try { failures.put(packageName + ":" + versionCode, now); } catch (JSONException ignored) { }
+        try {
+            failures.put(packageName + ":" + versionCode, new JSONObject()
+                    .put("v", versionCode).put("t", now).put("m", message == null ? "" : message));
+        } catch (JSONException ignored) { }
         preferences.edit().putString("update_failures", failures.toString()).apply();
     }
     void updateSucceeded(String packageName, long versionCode) {
@@ -63,6 +68,30 @@ final class ManagerStore {
         failures.remove(packageName + ":" + versionCode);
         preferences.edit().putString("update_failures", failures.toString()).apply();
     }
+    JSONObject updateReport() {
+        JSONObject report = new JSONObject();
+        JSONObject failures = updateFailures();
+        for (java.util.Iterator<String> keys = failures.keys(); keys.hasNext(); ) {
+            String key = keys.next();
+            Object raw = failures.opt(key);
+            long versionCode = 0; long failedAt = 0; String message = "";
+            if (raw instanceof JSONObject) {
+                JSONObject item = (JSONObject) raw;
+                versionCode = item.optLong("v"); failedAt = item.optLong("t"); message = item.optString("m");
+            } else if (raw instanceof Number) {
+                failedAt = ((Number) raw).longValue();
+                int separator = key.lastIndexOf(':');
+                if (separator > 0) try { versionCode = Long.parseLong(key.substring(separator + 1)); } catch (NumberFormatException ignored) { }
+            }
+            String packageName = key.substring(0, Math.max(0, key.lastIndexOf(':')));
+            try {
+                report.put(packageName, new JSONObject().put("versionCode", versionCode)
+                        .put("failedAt", failedAt).put("message", message));
+            } catch (JSONException ignored) { }
+        }
+        return report;
+    }
+    void clearUpdateFailures() { preferences.edit().remove("update_failures").apply(); }
     private JSONObject updateFailures() {
         try { return new JSONObject(preferences.getString("update_failures", "{}")); }
         catch (JSONException ignored) { return new JSONObject(); }

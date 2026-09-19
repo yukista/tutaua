@@ -63,7 +63,8 @@ public final class SyncJobService extends JobService {
                 store.updateSucceeded(packageName, versionCode);
                 recordUpdate(release, true);
             } catch (Exception error) {
-                store.updateFailed(packageName, versionCode, System.currentTimeMillis());
+                String message = error.getClass().getSimpleName() + (error.getMessage() == null ? "" : ": " + error.getMessage());
+                store.updateFailed(packageName, versionCode, message, System.currentTimeMillis());
                 recordUpdate(release, false);
                 Log.e("TUTAUA_MANAGER", "update ERROR " + packageName, error);
             }

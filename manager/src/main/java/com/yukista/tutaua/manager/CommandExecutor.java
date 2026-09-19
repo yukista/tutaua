@@ -13,7 +13,12 @@ final class CommandExecutor {
         if (payload == null) payload = new JSONObject();
         switch (kind) {
             case "sync": case "check_updates": return new JSONObject().put("accepted", true);
-            case "diagnostics": return new JSONObject().put("inventory", Inventory.collect(context));
+            case "diagnostics": return new JSONObject().put("inventory", Inventory.collect(context, new ManagerStore(context)));
+            case "repair": {
+                int abandoned = UpdateInstaller.repair(context);
+                new ManagerStore(context).clearUpdateFailures();
+                return new JSONObject().put("abandonedSessions", abandoned).put("clearedCooldowns", true);
+            }
             case "restart_app": {
                 String packageName = payload.getString("applicationId");
                 if (!Arrays.asList(Inventory.PACKAGES).contains(packageName)) throw new SecurityException("package not allowed");

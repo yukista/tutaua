@@ -28,7 +28,7 @@ final class Inventory {
             "tv.tutaua.app", "com.yukista.tutaua.games"
     };
 
-    static JSONObject collect(Context context) throws Exception {
+    static JSONObject collect(Context context, ManagerStore store) throws Exception {
         JSONObject root = new JSONObject();
         root.put("manufacturer", Build.MANUFACTURER).put("model", Build.MODEL)
                 .put("device", Build.DEVICE).put("android", Build.VERSION.RELEASE)
@@ -59,6 +59,11 @@ final class Inventory {
                     .put("versionName", info.versionName == null ? "" : info.versionName));
         } catch (PackageManager.NameNotFoundException ignored) {}
         root.put("applications", applications);
+        JSONObject updates = store == null ? new JSONObject() : store.updateReport();
+        if (updates.length() > 0) root.put("updates", updates);
+        try {
+            root.put("installSessions", context.getPackageManager().getPackageInstaller().getMySessions().size());
+        } catch (RuntimeException ignored) { }
         return root;
     }
 

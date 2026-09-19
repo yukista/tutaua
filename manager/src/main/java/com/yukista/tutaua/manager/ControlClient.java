@@ -23,13 +23,13 @@ import javax.net.ssl.SSLSocketFactory;
 final class ControlClient {
     static JSONObject enroll(Context context, String server, String lanAddress, String code) throws Exception {
         JSONObject request = new JSONObject().put("code", code).put("publicKey", DeviceIdentity.publicKey())
-                .put("inventory", Inventory.collect(context));
+                .put("inventory", Inventory.collect(context, new ManagerStore(context)));
         return json("POST", cleanServer(server) + "/v1/device-enrollments", null, lanAddress, request);
     }
     static JSONObject checkIn(Context context, ManagerStore store) throws Exception {
         JSONObject reported = ReportedConfig.collect(context, store);
         JSONObject request = new JSONObject().put("configVersion", store.configVersion())
-                .put("reportedConfig", reported).put("inventory", Inventory.collect(context));
+                .put("reportedConfig", reported).put("inventory", Inventory.collect(context, store));
         return json("POST", store.server() + "/v1/devices/check-in", store.token(), store.lanAddress(), request);
     }
     static void commandResult(ManagerStore store, String id, boolean success, JSONObject result) throws Exception {

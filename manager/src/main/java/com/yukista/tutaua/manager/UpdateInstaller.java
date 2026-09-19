@@ -152,6 +152,16 @@ final class UpdateInstaller {
     private static void abandonSession(PackageInstaller installer, int sessionId) {
         try { installer.abandonSession(sessionId); } catch (RuntimeException ignored) { }
     }
+
+    // Remote recovery for boxes without ADB: drop every install session owned by
+    // the Manager and report how many were active.
+    static int repair(Context context) {
+        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+        int active = 0;
+        try { active = installer.getMySessions().size(); } catch (RuntimeException ignored) { }
+        abandonStaleSessions(installer);
+        return active;
+    }
     private static String installAsRoot(File apk, String packageInstallerError) throws Exception {
         Process process = new ProcessBuilder("su", "-c", "pm install -r --user 0 " + shellQuote(apk.getAbsolutePath()))
                 .redirectErrorStream(true).start();
