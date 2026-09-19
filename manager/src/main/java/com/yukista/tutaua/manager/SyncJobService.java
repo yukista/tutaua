@@ -52,8 +52,21 @@ public final class SyncJobService extends JobService {
         JSONArray updates = response.optJSONArray("updates");
         if (updates != null) for (int index = 0; index < updates.length(); index++) {
             JSONObject release = updates.getJSONObject(index);
-            try { UpdateInstaller.install(this, store, release); recordUpdate(release,true); }
-            catch(Exception error){recordUpdate(release,false);Log.e("TUTAUA_MANAGER","update ERROR "+release.optString("applicationId"),error);}
+            String packageName = release.optString("applicationId");
+            long versionCode = release.optLong("versionCode");
+            if (store.updateOnCooldown(packageName, versionCode, System.currentTimeMillis())) {
+                Log.i("TUTAUA_MANAGER", "update SKIPPED cooldown " + packageName);
+                continue;
+            }
+            try {
+                UpdateInstaller.install(this, store, release);
+                store.updateSucceeded(packageName, versionCode);
+                recordUpdate(release, true);
+            } catch (Exception error) {
+                store.updateFailed(packageName, versionCode, System.currentTimeMillis());
+                recordUpdate(release, false);
+                Log.e("TUTAUA_MANAGER", "update ERROR " + packageName, error);
+            }
         }
         Log.i("TUTAUA_MANAGER", "sync SUCCESS");
     }

@@ -10,6 +10,7 @@
         <package android:name="com.yukista.tutaua.manager" />
         <package android:name="com.yukista.tutaua.box" />
         <package android:name="com.yukista.tutaua" />
+        <package android:name="com.yukista.tutaua.tdt" />
         <package android:name="tv.tutaua.app" />
         <package android:name="com.yukista.tutaua.games" />
     </queries>

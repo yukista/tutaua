@@ -6,6 +6,9 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import javax.crypto.Cipher;
@@ -40,6 +43,29 @@ final class ManagerStore {
     }
     void heartbeatSeconds(int seconds) {
         preferences.edit().putInt("heartbeat_seconds", seconds).apply();
+    }
+
+    // A failed update must not be retried on every heartbeat: without a cooldown
+    // a broken release is hammered once per minute.
+    private static final long UPDATE_COOLDOWN_MILLIS = 6 * 3600 * 1000L;
+
+    boolean updateOnCooldown(String packageName, long versionCode, long now) {
+        long failedAt = updateFailures().optLong(packageName + ":" + versionCode, 0);
+        return failedAt > 0 && now - failedAt < UPDATE_COOLDOWN_MILLIS;
+    }
+    void updateFailed(String packageName, long versionCode, long now) {
+        JSONObject failures = updateFailures();
+        try { failures.put(packageName + ":" + versionCode, now); } catch (JSONException ignored) { }
+        preferences.edit().putString("update_failures", failures.toString()).apply();
+    }
+    void updateSucceeded(String packageName, long versionCode) {
+        JSONObject failures = updateFailures();
+        failures.remove(packageName + ":" + versionCode);
+        preferences.edit().putString("update_failures", failures.toString()).apply();
+    }
+    private JSONObject updateFailures() {
+        try { return new JSONObject(preferences.getString("update_failures", "{}")); }
+        catch (JSONException ignored) { return new JSONObject(); }
     }
     void enrollment(String server, String lanAddress, String deviceId, String token) throws Exception {
         preferences.edit().putString("server", trim(server)).putString("device_id", deviceId)

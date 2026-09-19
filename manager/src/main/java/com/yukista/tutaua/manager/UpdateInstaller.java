@@ -95,6 +95,7 @@ final class UpdateInstaller {
     }
     private static String installPackage(Context context, File apk, String packageName) throws Exception {
         PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+        abandonStaleSessions(installer);
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(packageName);
         if (Build.VERSION.SDK_INT >= 31) params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
@@ -111,24 +112,45 @@ final class UpdateInstaller {
         };
         if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(receiver, new IntentFilter(action), Context.RECEIVER_NOT_EXPORTED);
         else context.registerReceiver(receiver, new IntentFilter(action));
-        try (PackageInstaller.Session session = installer.openSession(sessionId)) {
-            try (FileInputStream input = new FileInputStream(apk);
-                 OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
-                byte[] buffer = new byte[64 * 1024]; int read;
-                while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
-                session.fsync(output);
-            }
-            PendingIntent callback = PendingIntent.getBroadcast(context, sessionId, new Intent(action).setPackage(context.getPackageName()),
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-            session.commit(callback.getIntentSender());
-        }
         try {
-            if (!completed.await(120, TimeUnit.SECONDS)) return installAsRoot(apk, "PackageInstaller timeout");
+            try (PackageInstaller.Session session = installer.openSession(sessionId)) {
+                try (FileInputStream input = new FileInputStream(apk);
+                     OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
+                    byte[] buffer = new byte[64 * 1024]; int read;
+                    while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
+                    session.fsync(output);
+                }
+                PendingIntent callback = PendingIntent.getBroadcast(context, sessionId, new Intent(action).setPackage(context.getPackageName()),
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                session.commit(callback.getIntentSender());
+            }
+            if (!completed.await(120, TimeUnit.SECONDS)) {
+                abandonSession(installer, sessionId);
+                return installAsRoot(apk, "PackageInstaller timeout");
+            }
             if (status.get() != PackageInstaller.STATUS_SUCCESS) {
+                abandonSession(installer, sessionId);
                 return installAsRoot(apk, "PackageInstaller status " + status.get() + ": " + statusMessage.get());
             }
             return "Success (PackageInstaller)";
+        } catch (Exception error) {
+            abandonSession(installer, sessionId);
+            throw error;
         } finally { context.unregisterReceiver(receiver); }
+    }
+
+    // Older releases left failed sessions active. Without this cleanup the UID
+    // eventually reaches the system limit and every install is rejected with
+    // "Too many active sessions". Purging our own sessions also recovers boxes
+    // that are already stuck.
+    private static void abandonStaleSessions(PackageInstaller installer) {
+        try {
+            for (PackageInstaller.SessionInfo info : installer.getMySessions()) abandonSession(installer, info.getSessionId());
+        } catch (RuntimeException ignored) { }
+    }
+
+    private static void abandonSession(PackageInstaller installer, int sessionId) {
+        try { installer.abandonSession(sessionId); } catch (RuntimeException ignored) { }
     }
     private static String installAsRoot(File apk, String packageInstallerError) throws Exception {
         Process process = new ProcessBuilder("su", "-c", "pm install -r --user 0 " + shellQuote(apk.getAbsolutePath()))

@@ -27,7 +27,7 @@ final class ControlClient {
         return json("POST", cleanServer(server) + "/v1/device-enrollments", null, lanAddress, request);
     }
     static JSONObject checkIn(Context context, ManagerStore store) throws Exception {
-        JSONObject reported = new JSONObject(store.reportedConfig());
+        JSONObject reported = ReportedConfig.collect(context, store);
         JSONObject request = new JSONObject().put("configVersion", store.configVersion())
                 .put("reportedConfig", reported).put("inventory", Inventory.collect(context));
         return json("POST", store.server() + "/v1/devices/check-in", store.token(), store.lanAddress(), request);
