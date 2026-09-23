@@ -38,7 +38,7 @@ public final class SyncJobService extends JobService {
             JSONObject config = response.getJSONObject("desiredConfig");
             int version = response.getInt("desiredConfigVersion");
             if (!applyConfiguration(version, config)) throw new IllegalStateException("Box rejected configuration");
-            store.configuration(version, config.toString());
+            store.configuration(version, withoutSecrets(config).toString());
             int heartbeat = config.optInt("manager.heartbeat_seconds", 0);
             if (heartbeat >= 30 && heartbeat <= 3600) store.heartbeatSeconds(heartbeat);
         }
@@ -72,6 +72,17 @@ public final class SyncJobService extends JobService {
         Log.i("TUTAUA_MANAGER", "sync SUCCESS");
     }
     private void recordUpdate(JSONObject r,boolean ok){sendBroadcast(new Intent("com.yukista.tutaua.box.action.UPDATE_RECORDED").setPackage("com.yukista.tutaua.box").putExtra("package",r.optString("applicationId")).putExtra("versionName",r.optString("versionName")).putExtra("versionCode",r.optLong("versionCode")).putExtra("success",ok).putExtra("time",System.currentTimeMillis()),"com.yukista.tutaua.permission.MANAGE_BOX");}
+
+    private static JSONObject withoutSecrets(JSONObject config) throws org.json.JSONException {
+        JSONObject copy = new JSONObject();
+        for (java.util.Iterator<String> keys = config.keys(); keys.hasNext(); ) {
+            String key = keys.next();
+            // The Box keeps the Jellyfin password encrypted; Manager must not persist it.
+            if ("jellyfin.password".equals(key)) continue;
+            copy.put(key, config.opt(key));
+        }
+        return copy;
+    }
 
     private boolean applyConfiguration(int version, JSONObject config) throws InterruptedException {
         Intent apply = new Intent("com.yukista.tutaua.box.action.APPLY_REMOTE_CONFIG")

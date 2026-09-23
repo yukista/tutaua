@@ -16,6 +16,7 @@ import java.util.Map;
 final class ReportedConfig {
     private static final String[] KEYS = {
             "jellyfin.base_url",
+            "jellyfin.username",
             "tv.api_base_url",
             "tv.stream_url",
             "manager.base_url",
