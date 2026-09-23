@@ -21,8 +21,8 @@ android {
         applicationId = "com.yukista.tutaua"
         minSdk = 24
         targetSdk = 36
-        versionCode = 45
-        versionName = "1.0.14"
+        versionCode = 46
+        versionName = "1.0.15"
     }
 
     signingConfigs {

@@ -40,6 +40,14 @@
                 <action android:name="com.yukista.tutaua.action.PROVISION" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".CredentialsReceiver"
+            android:exported="true"
+            android:permission="com.yukista.tutaua.permission.MANAGE_BOX">
+            <intent-filter>
+                <action android:name="com.yukista.tutaua.action.APPLY_CREDENTIALS" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize"

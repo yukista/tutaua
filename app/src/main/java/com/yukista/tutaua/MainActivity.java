@@ -3,6 +3,10 @@ package com.yukista.tutaua;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -86,6 +90,17 @@ public class MainActivity extends Activity {
 
     private final ExecutorService io = Executors.newFixedThreadPool(6);
     private final AdminEscape adminEscape = new AdminEscape(this);
+    private final BroadcastReceiver credentialsApplied = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            String appliedServer = prefs.getString("server", "");
+            String appliedToken = secureTokenStore.read();
+            String appliedUserId = prefs.getString("userId", "");
+            boolean changed = !appliedServer.equals(server) || !appliedUserId.equals(userId);
+            if (!appliedToken.isEmpty() && !appliedToken.equals(token)) changed = true;
+            server = appliedServer; token = appliedToken; userId = appliedUserId;
+            if (changed && !isFinishing() && !playing) showBrowse("home");
+        }
+    };
     private final LruCache<String, Bitmap> imageCache = new LruCache<String, Bitmap>(16 * 1024) { @Override protected int sizeOf(String key, Bitmap value) { return value.getByteCount() / 1024; } };
     private final Object imageCacheLock = new Object();
     private SharedPreferences prefs;
@@ -243,7 +258,31 @@ public class MainActivity extends Activity {
             secureTokenStore.clear();
             prefs.edit().putString("server", server).remove("userId").remove("username").apply();
         }
-        if (token.isEmpty()) showLogin(); else { showBrowse("home"); if (prefs.getString("username", "").isEmpty()) refreshUserName(); }
+        registerCredentialsListener();
+        if (token.isEmpty()) { requestCredentialsFromBox(); showLogin(); }
+        else { showBrowse("home"); if (prefs.getString("username", "").isEmpty()) refreshUserName(); }
+    }
+
+    private void registerCredentialsListener() {
+        IntentFilter filter = new IntentFilter(JellyfinCredentials.ACTION_APPLIED);
+        if (android.os.Build.VERSION.SDK_INT >= 33)
+            registerReceiver(credentialsApplied, filter, Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(credentialsApplied, filter);
+    }
+
+    private void requestCredentialsFromBox() {
+        Intent request = new Intent("com.yukista.tutaua.box.action.REQUEST_CREDENTIALS")
+                .setPackage("com.yukista.tutaua.box");
+        try {
+            sendOrderedBroadcast(request, null, new BroadcastReceiver() {
+                @Override public void onReceive(Context context, Intent intent) {
+                    Bundle extras = getResultExtras(false);
+                    if (extras == null) return;
+                    JellyfinCredentials.apply(MainActivity.this, extras.getString("server"),
+                            extras.getString("username"), extras.getString("password"), null);
+                }
+            }, null, Activity.RESULT_CANCELED, null, null);
+        } catch (RuntimeException ignored) { }
     }
 
     private String s(int id) { return getString(id); }
@@ -1381,5 +1420,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override protected void onDestroy() { adminEscape.cancel(); releasePlayer(); io.shutdownNow(); super.onDestroy(); }
+    @Override protected void onDestroy() {
+        try { unregisterReceiver(credentialsApplied); } catch (RuntimeException ignored) { }
+        adminEscape.cancel(); releasePlayer(); io.shutdownNow(); super.onDestroy();
+    }
 }
