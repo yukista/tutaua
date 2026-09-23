@@ -202,8 +202,8 @@ foreach ($item in @(
     if ($LASTEXITCODE -ne 0) { throw "La instal·lació de $($item.Name) ha fallat." }
 }
 $managerPackage = (Invoke-Adb $Target @('shell','dumpsys','package','com.yukista.tutaua.manager') -AllowFailure) -join "`n"
-if ($managerPackage -notmatch 'android\.permission\.INSTALL_PACKAGES:\s+granted=true') {
-    throw 'Tutaua Manager no te el permis privilegiat INSTALL_PACKAGES.'
+if ($managerPackage -notmatch 'android\.permission\.UPDATE_PACKAGES_WITHOUT_USER_ACTION:\s+granted=true') {
+    throw 'Tutaua Manager no te el permis privilegiat UPDATE_PACKAGES_WITHOUT_USER_ACTION.'
 }
 $deviceName = "TX5-$($identity.Serial)" -replace '[^A-Za-z0-9._-]','_'
 $enrollmentUri = $ControlServer.AbsoluteUri.TrimEnd('/') + '/v1/provisioning/enrollment-codes'
@@ -284,7 +284,9 @@ foreach ($package in $applicablePackages) {
     }
 }
 Invoke-Adb $Target @('shell','settings','put','system','screen_off_timeout',"$screenOffTimeoutMs") | Out-Null
-Start-Sleep -Seconds 4
+# Let PackageManager persist the disabled state before rebooting; a reboot issued
+# too soon after disabling can drop it. The loop below re-verifies after each boot.
+Start-Sleep -Seconds 8
 & $adbPath connect $stableTarget | Out-Null
 Invoke-Adb $stableTarget @('reboot') | Out-Null
 Wait-ForAndroid $stableTarget
@@ -293,6 +295,24 @@ Start-Sleep -Seconds 3
 
 $disabledAfter = Invoke-Adb $stableTarget @('shell','pm','list','packages','-d','--user','0')
 $missingDisabled = @($applicablePackages | Where-Object { $disabledAfter -notcontains "package:$_" })
+# The disabled state is persisted asynchronously; a reboot issued seconds after
+# disabling can drop it. Re-apply and reboot until a reboot preserves the whole
+# quarantine, so the final validation only passes on durable state.
+$quarantineRetries = 0
+while ($missingDisabled.Count -gt 0 -and $quarantineRetries -lt 3) {
+    $quarantineRetries++
+    foreach ($package in $missingDisabled) {
+        Invoke-Adb $stableTarget @('shell','pm','disable-user','--user','0',$package) -AllowFailure | Out-Host
+        Invoke-Adb $stableTarget @('shell','am','force-stop','--user','0',$package) -AllowFailure | Out-Null
+    }
+    Start-Sleep -Seconds 8
+    Invoke-Adb $stableTarget @('reboot') | Out-Null
+    Wait-ForAndroid $stableTarget
+    Invoke-Adb $stableTarget @('shell','input','keyevent','HOME') | Out-Null
+    Start-Sleep -Seconds 3
+    $disabledAfter = Invoke-Adb $stableTarget @('shell','pm','list','packages','-d','--user','0')
+    $missingDisabled = @($applicablePackages | Where-Object { $disabledAfter -notcontains "package:$_" })
+}
 $resolvedHome = (Invoke-Adb $stableTarget @('shell','cmd','package','resolve-activity','--brief','--user','0','-a','android.intent.action.MAIN','-c','android.intent.category.HOME')) -join "`n"
 $settings = (Invoke-Adb $stableTarget @('shell','cmd','package','resolve-activity','--brief','-a','android.settings.SETTINGS')) -join "`n"
 $webView = (Invoke-Adb $stableTarget @('shell','dumpsys','webviewupdate')) -join "`n"
@@ -316,6 +336,7 @@ $report = [ordered]@{Timestamp=(Get-Date).ToString('o');Success=$success;Identit
     MissingDisabledPackages=$missingDisabled;Home=$resolvedHome;Settings=$settings;
     WebViewAosp=($webView -match 'Current WebView package.*com\.android\.webview');Network=$network -match '1 received';
     ScreenOffTimeoutMinutes=($configuredScreenOffTimeout / 60000);
+    QuarantineRetries=$quarantineRetries;
     LabAdbKept=[bool]$KeepLabAdb}
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
 $safeSerial = ($identity.Serial -replace '[^A-Za-z0-9_.-]','_')
