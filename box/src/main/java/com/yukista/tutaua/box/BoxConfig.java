@@ -16,6 +16,7 @@ final class BoxConfig {
     static final String REMOTE_TV = "https://tutaua-app.duckdns.org/tv";
     static final String DEFAULT_FLEET = "https://tutaua-app.duckdns.org/control";
     static final String JELLYFIN_URL = "jellyfin.base_url";
+    static final String JELLYFIN_USER = "jellyfin.username";
     static final String TV_API_URL = "tv.api_base_url";
     static final String TV_STREAM_URL = "tv.stream_url";
     static final String TDT_CATALOG = "tdt.catalog";
@@ -46,6 +47,7 @@ final class BoxConfig {
         values.put(FLEET_URL, preferences.getString(FLEET_URL, ""));
         values.put(FLEET_LAN, preferences.getString(FLEET_LAN, ""));
         values.put(JELLYFIN_URL, preferences.getString(JELLYFIN_URL, ""));
+        values.put(JELLYFIN_USER, preferences.getString(JELLYFIN_USER, ""));
         values.put(TV_API_URL, preferences.getString(TV_API_URL, ""));
         values.put(TV_STREAM_URL, preferences.getString(TV_STREAM_URL, ""));
         values.put(TDT_CATALOG, preferences.getString(TDT_CATALOG, ""));
@@ -98,6 +100,15 @@ final class BoxConfig {
 
     static boolean validChannel(String value) {
         return value != null && value.matches("[A-Za-z0-9._-]{1,32}");
+    }
+
+    static boolean validUsername(String value) {
+        String candidate = value == null ? "" : value.trim();
+        return candidate.length() <= 64 && !candidate.matches(".*[\\p{Cntrl}].*");
+    }
+
+    static boolean validPassword(String value) {
+        return value == null || value.length() <= 256;
     }
 
     static boolean validTimeoutMinutes(int minutes) { return minutes >= 1 && minutes <= 120; }

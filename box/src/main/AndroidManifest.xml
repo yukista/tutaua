@@ -45,6 +45,12 @@
             android:permission="com.yukista.tutaua.permission.MANAGE_BOX">
             <intent-filter><action android:name="com.yukista.tutaua.box.action.APPLY_REMOTE_CONFIG" /></intent-filter>
         </receiver>
+        <receiver
+            android:name=".CredentialsRequestReceiver"
+            android:exported="true"
+            android:permission="com.yukista.tutaua.permission.READ_CONFIG">
+            <intent-filter><action android:name="com.yukista.tutaua.box.action.REQUEST_CREDENTIALS" /></intent-filter>
+        </receiver>
         <receiver android:name=".UpdateHistoryReceiver" android:exported="true" android:permission="com.yukista.tutaua.permission.MANAGE_BOX"><intent-filter><action android:name="com.yukista.tutaua.box.action.UPDATE_RECORDED" /></intent-filter></receiver>
         <service
             android:name=".RemoteKeyService"

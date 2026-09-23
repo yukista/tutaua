@@ -26,7 +26,7 @@ import java.util.Map;
 
 public final class AdminActivity extends Activity {
     private static final int BG=Color.rgb(7,10,18), SURFACE=Color.rgb(18,24,37), FIELD=Color.rgb(29,36,52), MUTED=Color.rgb(150,160,184);
-    private EditText jellyfin, tvApi, tvStream, updates, channel, timeout, adminPin, fleet, fleetLan;
+    private EditText jellyfin, jellyfinUser, jellyfinPass, tvApi, tvStream, updates, channel, timeout, adminPin, fleet, fleetLan;
     private Button back, save, libraryKey, liveTvKey, gamesKey, captureTarget;
     private Switch gamesEnabled;
     private boolean consumeCapturedKeyUp;
@@ -47,6 +47,8 @@ public final class AdminActivity extends Activity {
         presets.addView(remote,new LinearLayout.LayoutParams(0,dp(48),1)); services.addView(presets);
         local.setOnClickListener(v->suggestUrls(false)); remote.setOnClickListener(v->suggestUrls(true));
         jellyfin=field(services,getString(R.string.jellyfin_server),config.get(BoxConfig.JELLYFIN_URL),getString(R.string.jellyfin_hint),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
+        jellyfinUser=field(services,getString(R.string.jellyfin_user),config.get(BoxConfig.JELLYFIN_USER),getString(R.string.jellyfin_user_hint),InputType.TYPE_CLASS_TEXT);
+        jellyfinPass=field(services,getString(R.string.jellyfin_password),"",getString(R.string.jellyfin_password_hint),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         tvApi=field(services,getString(R.string.tv_api),config.get(BoxConfig.TV_API_URL),getString(R.string.tv_api_hint),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
         tvStream=field(services,getString(R.string.tv_stream),config.get(BoxConfig.TV_STREAM_URL),getString(R.string.tv_stream_hint),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
         fleet=field(services,getString(R.string.fleet_server),config.get(BoxConfig.FLEET_URL),getString(R.string.fleet_keep_enrolled),InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
@@ -88,8 +90,14 @@ public final class AdminActivity extends Activity {
         int libraryCode=(Integer)libraryKey.getTag(),liveTvCode=(Integer)liveTvKey.getTag(),gamesCode=(Integer)gamesKey.getTag();if(hasDuplicateNonZero(libraryCode,liveTvCode,gamesCode)){toast(R.string.duplicate_remote_button);return;}
         String pinValue=adminPin.getText()==null?"":adminPin.getText().toString().trim();
         if(!BoxConfig.validAdminPin(pinValue)){toast(R.string.invalid_admin_pin);return;}
-        boolean stored=BoxConfig.preferences(this).edit().putString(BoxConfig.FLEET_URL,BoxConfig.trimUrl(fleet.getText().toString())).putString(BoxConfig.FLEET_LAN,fleetLan.getText().toString().trim()).putString(BoxConfig.JELLYFIN_URL,BoxConfig.trimUrl(jellyfin.getText().toString())).putString(BoxConfig.TV_API_URL,BoxConfig.trimUrl(tvApi.getText().toString())).putString(BoxConfig.TV_STREAM_URL,tvStream.getText().toString().trim()).putString(BoxConfig.UPDATE_MANIFEST_URL,updates.getText().toString().trim()).putString(BoxConfig.UPDATE_CHANNEL,updateChannel).putString(BoxConfig.SCREEN_TIMEOUT_MINUTES,String.valueOf(minutes)).putString(BoxConfig.LIBRARY_KEYCODE,String.valueOf(libraryCode)).putString(BoxConfig.LIVE_TV_KEYCODE,String.valueOf(liveTvCode)).putString(BoxConfig.GAMES_KEYCODE,String.valueOf(gamesCode)).putBoolean(BoxConfig.GAMES_ENABLED,gamesEnabled.isChecked()).putString(BoxConfig.ADMIN_PIN,pinValue).commit();
-        if(!stored){toast(R.string.save_failed);return;} BoxConfig.notifyConfiguration(this); save.setEnabled(false); save.setText(R.string.applying); final int selected=minutes;
+        String userValue=jellyfinUser.getText()==null?"":jellyfinUser.getText().toString().trim();
+        String passValue=jellyfinPass.getText()==null?"":jellyfinPass.getText().toString();
+        if(!BoxConfig.validUsername(userValue)||!BoxConfig.validPassword(passValue)){toast(R.string.invalid_credentials);return;}
+        boolean stored=BoxConfig.preferences(this).edit().putString(BoxConfig.FLEET_URL,BoxConfig.trimUrl(fleet.getText().toString())).putString(BoxConfig.FLEET_LAN,fleetLan.getText().toString().trim()).putString(BoxConfig.JELLYFIN_URL,BoxConfig.trimUrl(jellyfin.getText().toString())).putString(BoxConfig.JELLYFIN_USER,userValue).putString(BoxConfig.TV_API_URL,BoxConfig.trimUrl(tvApi.getText().toString())).putString(BoxConfig.TV_STREAM_URL,tvStream.getText().toString().trim()).putString(BoxConfig.UPDATE_MANIFEST_URL,updates.getText().toString().trim()).putString(BoxConfig.UPDATE_CHANNEL,updateChannel).putString(BoxConfig.SCREEN_TIMEOUT_MINUTES,String.valueOf(minutes)).putString(BoxConfig.LIBRARY_KEYCODE,String.valueOf(libraryCode)).putString(BoxConfig.LIVE_TV_KEYCODE,String.valueOf(liveTvCode)).putString(BoxConfig.GAMES_KEYCODE,String.valueOf(gamesCode)).putBoolean(BoxConfig.GAMES_ENABLED,gamesEnabled.isChecked()).putString(BoxConfig.ADMIN_PIN,pinValue).commit();
+        if(!stored){toast(R.string.save_failed);return;}
+        if(userValue.isEmpty())BoxCredentials.clear(this); else if(!passValue.isEmpty())BoxCredentials.write(this,passValue);
+        if(BoxCredentials.has(this))Credentials.push(this);
+        BoxConfig.notifyConfiguration(this); save.setEnabled(false); save.setText(R.string.applying); final int selected=minutes;
         new Thread(()->{boolean applied=DeviceSettings.applyScreenTimeoutMinutes(selected); runOnUiThread(()->{save.setEnabled(true);save.setText(R.string.save_changes);toast(applied?R.string.saved:R.string.saved_timeout_failed);});},"box-save-settings").start();
     }
     private boolean hasDuplicateNonZero(int first,int second,int third){return first!=0&&(first==second||first==third)||second!=0&&second==third;}

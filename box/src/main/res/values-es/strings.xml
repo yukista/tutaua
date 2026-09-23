@@ -13,7 +13,7 @@
     <string name="tdt_subtitle">Tus canales de televisión configurados remotamente</string>
     <string name="games_title">Juegos</string>
     <string name="games_subtitle">Tus juegos de consolas de 8 y 16 bits</string>
-    <string name="admin_hint">Mantén pulsado ATRÁS durante 4 segundos para abrir Administración</string>
+    <string name="admin_button">Administración</string>
     <string name="open">ABRIR  →</string>
     <string name="app_not_installed">Aplicación no instalada</string>
     <string name="admin_title">Administración</string>
@@ -23,6 +23,11 @@
     <string name="services_helper">Conexiones utilizadas por las aplicaciones</string>
     <string name="jellyfin_server">Servidor Jellyfin</string>
     <string name="jellyfin_hint">http://servidor:8096</string>
+    <string name="jellyfin_user">Usuario de Jellyfin</string>
+    <string name="jellyfin_user_hint">usuario</string>
+    <string name="jellyfin_password">Contraseña de Jellyfin</string>
+    <string name="jellyfin_password_hint">Vacío: conserva la contraseña actual</string>
+    <string name="invalid_credentials">Revisa el usuario y la contraseña de Jellyfin</string>
     <string name="tv_api">API de televisión</string>
     <string name="tv_api_hint">http://servidor:8092</string>
     <string name="tv_stream">Stream TV (opcional)</string>

@@ -22,6 +22,8 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
             String fleet = decode(intent, "fleet_b64");
             String fleetLan = decode(intent, "fleet_lan_b64");
             String jellyfin = decode(intent, "jellyfin_b64");
+            String jellyfinUser = decode(intent, "jellyfin_user_b64");
+            String jellyfinPassword = intent.hasExtra("jellyfin_password_b64") ? decode(intent, "jellyfin_password_b64") : null;
             String tvApi = decode(intent, "tv_api_b64");
             String tvStream = decode(intent, "tv_stream_b64");
             String updates = decode(intent, "updates_b64");
@@ -41,7 +43,8 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
                     || !BoxConfig.validChannel(channel)
                     || !BoxConfig.validKeyCode(libraryKeyCode) || !BoxConfig.validKeyCode(liveTvKeyCode) || !BoxConfig.validKeyCode(gamesKeyCode)
                     || hasDuplicateNonZero(libraryKeyCode, liveTvKeyCode, gamesKeyCode)
-                    || !BoxConfig.validTimeoutMinutes(timeoutMinutes))
+                    || !BoxConfig.validTimeoutMinutes(timeoutMinutes)
+                    || !BoxConfig.validUsername(jellyfinUser) || !BoxConfig.validPassword(jellyfinPassword))
                 throw new IllegalArgumentException("invalid_configuration");
             SharedPreferences.Editor editor = BoxConfig.preferences(context).edit()
                     .putString(BoxConfig.JELLYFIN_URL, BoxConfig.trimUrl(jellyfin))
@@ -55,10 +58,12 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
                     .putString(BoxConfig.GAMES_KEYCODE, String.valueOf(gamesKeyCode));
             if (intent.hasExtra("fleet_b64")) editor.putString(BoxConfig.FLEET_URL, BoxConfig.trimUrl(fleet));
             if (intent.hasExtra("fleet_lan_b64")) editor.putString(BoxConfig.FLEET_LAN, fleetLan.trim());
+            if (intent.hasExtra("jellyfin_user_b64")) editor.putString(BoxConfig.JELLYFIN_USER, jellyfinUser.trim());
             editor.putBoolean(BoxConfig.GAMES_ENABLED, gamesEnabled);
             if (!editor.commit()) throw new IllegalStateException("write_failed");
             if (!DeviceSettings.applyScreenTimeoutMinutes(timeoutMinutes))
                 throw new IllegalStateException("screen_timeout_failed");
+            if (intent.hasExtra("jellyfin_user_b64")) applyCredentials(context, jellyfinUser, jellyfinPassword);
             BoxConfig.notifyConfiguration(context);
             Log.i(TAG, requestId + " SUCCESS");
         } catch (Exception error) {
@@ -66,6 +71,11 @@ public final class ProvisioningReceiver extends BroadcastReceiver {
         } finally { intent.replaceExtras(new android.os.Bundle()); }
     }
 
+    private static void applyCredentials(Context context, String username, String password) {
+        if (username == null || username.trim().isEmpty()) { BoxCredentials.clear(context); return; }
+        if (password != null) BoxCredentials.write(context, password);
+        if (BoxCredentials.has(context)) Credentials.push(context);
+    }
     private static String decode(Intent intent, String key) {
         String value = intent.getStringExtra(key);
         return value == null || "-".equals(value) ? ""

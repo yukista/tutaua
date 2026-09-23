@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
@@ -27,14 +26,12 @@ import android.widget.Toast;
 public final class HomeActivity extends Activity {
     private static final String REMOTE_TAG = "TUTAUA_BOX_REMOTE";
     private static final int BG = Color.rgb(7, 10, 18), SURFACE = Color.rgb(22, 28, 42), MUTED = Color.rgb(156, 166, 190);
-    private final Handler handler = new Handler();
-    private boolean backHeld;
-    private boolean backReady;
     private boolean resumedOnce;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state); immersive();
         startService(new Intent(this, WatchdogService.class));
+        Credentials.push(this);
         LinearLayout page = new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL);
         page.setClipChildren(false); page.setClipToPadding(false);
         page.setPadding(dp(72), dp(42), dp(72), dp(28));
@@ -73,7 +70,7 @@ public final class HomeActivity extends Activity {
         updates.setOnFocusChangeListener((v, focused) -> v.setBackground(focused ? panel(Color.rgb(33, 40, 60), Color.rgb(150, 128, 255), 2) : fill(Color.rgb(17, 23, 38), 18)));
         LinearLayout.LayoutParams up = wrap(); up.leftMargin = dp(14); footer.addView(updates, up);
         footer.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
-        TextView help = label(getString(R.string.admin_hint), 13, Color.rgb(112, 122, 146), false); footer.addView(help);
+        footer.addView(adminButton());
         page.addView(footer, new LinearLayout.LayoutParams(-1, dp(38)));
         setContentView(page); library.requestFocus();
     }
@@ -116,23 +113,29 @@ public final class HomeActivity extends Activity {
             }
             return true;
         }
-        if (event.getKeyCode() != KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(event);
-        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
-            backHeld = true;
-            backReady = false;
-            handler.postDelayed(() -> backReady = true, 4000);
-            return true;
-        }
-        if (event.getAction() == KeyEvent.ACTION_UP) {
-            boolean shouldOpen = backHeld && backReady;
-            backHeld = false;
-            backReady = false;
-            handler.removeCallbacksAndMessages(null);
-            if (shouldOpen) openAdmin();
-            return true;
-        }
-        return true;
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) return true;
+        return super.dispatchKeyEvent(event);
     }
+
+    private View adminButton() {
+        LinearLayout button = new LinearLayout(this);
+        button.setGravity(Gravity.CENTER);
+        button.setFocusable(true); button.setClickable(true);
+        button.setContentDescription(getString(R.string.admin_button));
+        button.setPadding(dp(9), dp(9), dp(9), dp(9));
+        button.setBackground(fill(Color.rgb(17, 23, 38), 18));
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(R.drawable.ic_admin);
+        icon.setColorFilter(Color.rgb(96, 106, 130));
+        button.addView(icon, new LinearLayout.LayoutParams(dp(17), dp(17)));
+        button.setOnClickListener(v -> openAdmin());
+        button.setOnFocusChangeListener((v, focused) -> {
+            icon.setColorFilter(focused ? Color.WHITE : Color.rgb(96, 106, 130));
+            v.setBackground(focused ? panel(Color.rgb(33, 40, 60), Color.rgb(150, 128, 255), 2) : fill(Color.rgb(17, 23, 38), 18));
+        });
+        return button;
+    }
+
     private void openAdmin() {
         String pin = BoxConfig.preferences(this).getString(BoxConfig.ADMIN_PIN, BoxConfig.DEFAULT_ADMIN_PIN);
         if (pin == null || pin.isEmpty()) { startActivity(new Intent(this, AdminActivity.class)); return; }
@@ -175,5 +178,4 @@ public final class HomeActivity extends Activity {
     private LinearLayout.LayoutParams wrap() { return new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT); }
     private LinearLayout.LayoutParams card() { LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-1,1); p.setMargins(dp(12),0,dp(12),0); return p; }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
-    @Override protected void onDestroy() { handler.removeCallbacksAndMessages(null); super.onDestroy(); }
 }

@@ -21,6 +21,8 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
             String fleet = value(incoming, BoxConfig.FLEET_URL, current);
             String fleetLan = value(incoming, BoxConfig.FLEET_LAN, current);
             String jellyfin = value(incoming, BoxConfig.JELLYFIN_URL, current);
+            String jellyfinUser = value(incoming, BoxConfig.JELLYFIN_USER, current);
+            String jellyfinPassword = incoming.has("jellyfin.password") ? incoming.optString("jellyfin.password", "") : null;
             String tvApi = value(incoming, BoxConfig.TV_API_URL, current);
             String tvStream = value(incoming, BoxConfig.TV_STREAM_URL, current);
             String tdtCatalog = catalog(incoming, current);
@@ -35,11 +37,13 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
                     || !BoxConfig.validUrl(tvStream, true) || !BoxConfig.validUrl(updates, true)
                     || !BoxConfig.validChannel(channel) || !BoxConfig.validTimeoutMinutes(timeout)
                     || !BoxConfig.validKeyCode(library) || !BoxConfig.validKeyCode(liveTv) || !BoxConfig.validKeyCode(games)
+                    || !BoxConfig.validUsername(jellyfinUser) || !BoxConfig.validPassword(jellyfinPassword)
                     || duplicate(library, liveTv, games)) throw new IllegalArgumentException("invalid configuration");
             SharedPreferences.Editor editor = BoxConfig.preferences(context).edit()
                     .putString(BoxConfig.FLEET_URL, BoxConfig.trimUrl(fleet))
                     .putString(BoxConfig.FLEET_LAN, fleetLan.trim())
                     .putString(BoxConfig.JELLYFIN_URL, BoxConfig.trimUrl(jellyfin))
+                    .putString(BoxConfig.JELLYFIN_USER, jellyfinUser.trim())
                     .putString(BoxConfig.TV_API_URL, BoxConfig.trimUrl(tvApi))
                     .putString(BoxConfig.TV_STREAM_URL, tvStream.trim())
                     .putString(BoxConfig.TDT_CATALOG, tdtCatalog)
@@ -52,6 +56,7 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
                     .putBoolean(BoxConfig.GAMES_ENABLED, gamesEnabled);
             if (!editor.commit() || !DeviceSettings.applyScreenTimeoutMinutes(timeout))
                 throw new IllegalStateException("apply failed");
+            applyCredentials(context, jellyfinUser, jellyfinPassword);
             BoxConfig.notifyConfiguration(context);
             setResultCode(Activity.RESULT_OK);
             Log.i("TUTAUA_BOX_REMOTE", "configuration SUCCESS version=" + intent.getIntExtra("version", 0));
@@ -60,6 +65,11 @@ public final class RemoteConfigReceiver extends BroadcastReceiver {
             Log.e("TUTAUA_BOX_REMOTE", "configuration ERROR " + error.getClass().getSimpleName());
         }
         finally { intent.replaceExtras(new android.os.Bundle()); }
+    }
+    private static void applyCredentials(Context context, String username, String password) {
+        if (username == null || username.trim().isEmpty()) { BoxCredentials.clear(context); return; }
+        if (password != null) BoxCredentials.write(context, password);
+        if (BoxCredentials.has(context)) Credentials.push(context);
     }
     private static String value(JSONObject source, String key, Map<String, String> fallback) {
         return source.has(key) ? source.optString(key, "") : fallback.get(key);

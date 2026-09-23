@@ -45,6 +45,16 @@ public class BoxConfigTest {
         assertFalse(BoxConfig.validTimeoutMinutes(121));
     }
 
+    @Test public void jellyfinUsernameAndPasswordStayWithinBounds() {
+        assertTrue(BoxConfig.validUsername(""));
+        assertTrue(BoxConfig.validUsername(" veure "));
+        assertFalse(BoxConfig.validUsername("line\nbreak"));
+        assertFalse(BoxConfig.validUsername("x".repeat(65)));
+        assertTrue(BoxConfig.validPassword(null));
+        assertTrue(BoxConfig.validPassword(""));
+        assertFalse(BoxConfig.validPassword("x".repeat(257)));
+    }
+
     @Test public void learnedRemoteKeyCodesStayWithinAndroidRange() {
         assertTrue(BoxConfig.validKeyCode(0));
         assertTrue(BoxConfig.validKeyCode(132));

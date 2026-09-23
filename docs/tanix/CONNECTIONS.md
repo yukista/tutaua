@@ -39,6 +39,10 @@ No donar l’accés exterior per validat fins a provar-lo des d’una altra xarx
   el servidor definit a la compilació per compatibilitat.
 - Canviar Jellyfin elimina la sessió associada a l’adreça anterior i demana
   autenticar-se de nou, també si són dues adreces del mateix servidor.
+- El panell permet definir `jellyfin.username` i `jellyfin.password`. La
+  contrasenya és d’escriptura: mai es torna a mostrar al formulari ni apareix a
+  la configuració reportada. El Box la desa xifrada i la reenvia a l’app, que fa
+  auto-login i conserva només el token; un camp buit manté el valor anterior.
 - Manager llegeix la connexió de Box a cada sincronització; desar a Box sol·licita
   una sincronització. Un servidor Fleet buit conserva l’enrolament anterior.
   Amb un servidor explícit, una IP local buida desactiva el mapatge LAN.
